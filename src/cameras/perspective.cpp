@@ -35,10 +35,10 @@ public:
     CameraSample sample(const Point2 &normalized, Sampler &rng) const override {
         // transform the 2d point from image plane into 3d camera coordinate system
         // and create a ray from camera origin through the point on the image plain
-        Ray ray = Ray(Vector({0.f, 0.f, 0.f}), 
-                  Vector({normalized.x()*lengthOfImagePlaneX, 
+        Ray ray = Ray(Vector(0.f, 0.f, 0.f), 
+                  Vector(normalized.x()*lengthOfImagePlaneX, 
                           normalized.y()*-lengthOfImagePlaneY, 
-                          1.f}));
+                          1.f));
               
         // transform the ray to the world coordinate system
         ray = (*m_transform).apply(ray);
