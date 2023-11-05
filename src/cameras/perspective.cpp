@@ -11,10 +11,17 @@ namespace lightwave {
  * are directed in negative y direction ( @code ray.direction.y < 0 ).
  */
 class Perspective : public Camera {
+private:
+    float pixelXToPointXIn3D;
+    float pixelYToPointYIn3D;
+
 public:
     Perspective(const Properties &properties)
     : Camera(properties) {
-        NOT_IMPLEMENTED
+        const float fov = properties.get<float>("fov");
+
+        // compute functions to get from 2d pixels on image plane to 3d camera coordinates
+        pixelXToPointXIn3D = // @Johannes bin gerade dran :D
 
         // hints:
         // * precompute any expensive operations here (most importantly trigonometric functions)
@@ -22,7 +29,15 @@ public:
     }
 
     CameraSample sample(const Point2 &normalized, Sampler &rng) const override {
-        NOT_IMPLEMENTED
+        // transform the 2d point from image plane into 3d camera coordinate system
+
+        // create a normalized ray from camera origin through the 3d point on image plane
+
+        // transform the ray to the world coordinate system
+        return CameraSample{
+                .ray = Ray(Vector({normalized.x(), normalized.x(), 0.f}), Vector({0.f, 0.f, 1.f})),
+                .weight = Color(1.0f)
+            };
 
         // hints:
         // * use m_transform to transform the local camera coordinate system into the world coordinate system
