@@ -2,6 +2,32 @@
 
 namespace lightwave {
 class Sphere : public Shape {
+    /**
+     * @brief Constructs a surface event for a given position, used by @ref intersect to populate the @ref Intersection
+     * and by @ref sampleArea to populate the @ref AreaSample .
+     * @param surf The surface event to populate with texture coordinates, shading frame and area pdf
+     * @param position The hitpoint (i.e., point in [-1,-1,0] to [+1,+1,0]), found via intersection or area sampling
+     */
+    inline void populate(SurfaceEvent &surf, const Point &position) const {
+        surf.position = position;
+        
+        // map the position from [-1,-1,0]..[+1,+1,0] to [0,0]..[1,1] by discarding the z component and rescaling
+        // I did not yet adjust this!
+        surf.uv.x() = (position.x() + 1) / 2;
+        surf.uv.y() = (position.y() + 1) / 2;
+
+        // TODO fix the tangent and bitangent...
+        // I dont know how they point on a sphere
+        // the tangent always points in positive x direction
+        surf.frame.tangent = Vector(1, 0, 0);
+        // the bitagent always points in positive y direction
+        surf.frame.bitangent = Vector(0, 1, 0);
+        // and accordingly, the normal always points away from the center
+        surf.frame.normal = Vector(position);
+
+        // TODO
+        surf.pdf = 0;
+    }
     
 public:
     Sphere(const Properties &properties) {
@@ -24,29 +50,35 @@ public:
         // check if they are valid by checking the term inside of sqrt()
         float aux = b * b - 4.f * a * c;
         float t = 0;
-        if (aux < 0)
-        {
+        if (aux < 0){
             // no solution exists 
             return false;
-        }
-        else if (aux == 0)
-        {
+        } else if (aux == 0){
             // one solution exists
             t =  (-b) / 2.f;
-        }
-        else
-        {
+        } else {
             // there are two solutions. Take the closer one i.e. the smaler t
             float t1 = (-b + sqrt(aux)) / 2.f;
             float t2 = (-b - sqrt(aux)) / 2.f;
 
-            t =  min(t1, t2);
+            float smaler = min(t1, t2);
+            float larger = max(t1, t2);
+            if (smaler > 0) {
+                t = smaler;
+            } else if (larger > 0){
+                t = larger;
+            } else {
+                return false;
+            } 
         }
+
         // discard the intersection if there was a closer one already or if it is to close
         if (t < Epsilon || t > its.t)
             return false;
 
         its.t = t;
+        Point position = ray(t);
+        populate(its, position); // compute the shading frame, texture coordinates and area pdf (same as sampleArea)
         return true;
     }
 
