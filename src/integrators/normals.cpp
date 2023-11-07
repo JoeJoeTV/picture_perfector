@@ -24,14 +24,18 @@ public:
         // if no intersection occured
         if (!its)
         {
-            return Color(0.f);   
+            if (m_remap) {
+                return Color(0.5f);
+            } else {
+                return Color(0.f);;
+            }    
         }
 
         Vector normal = its.frame.normal;
 
         if (m_remap)
         {
-            normal = (normal + Vector(1)) / 2;
+            normal = (normal + Vector(1.f)) / 2.f;
             //normal = normal.normalized();
         }
         
