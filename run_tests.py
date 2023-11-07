@@ -129,4 +129,4 @@ if args.unsafe_tests:
         # it's fine if this test does not pass :-)
         pass
 
-    sys.exit(0 if all_passed else 1)
+sys.exit(0 if all_passed else 1)
