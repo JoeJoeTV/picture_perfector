@@ -6,6 +6,16 @@
 namespace lightwave {
 
 void Instance::transformFrame(SurfaceEvent &surf) const {
+    surf.position = m_transform->apply(surf.position);
+
+    surf.frame.tangent = m_transform->apply(surf.frame.tangent).normalized();
+    if (m_flipNormal) {
+        surf.frame.bitangent = -1 * m_transform->apply(surf.frame.bitangent).normalized();
+    } else {
+        surf.frame.bitangent = m_transform->apply(surf.frame.bitangent).normalized();
+    }
+
+    surf.frame.normal = surf.frame.bitangent.cross(surf.frame.tangent).normalized();
     // hints:
     // * transform the hitpoint and frame here
     // * if m_flipNormal is true, flip the direction of the bitangent (which in effect flips the normal)
@@ -19,14 +29,16 @@ bool Instance::intersect(const Ray &worldRay, Intersection &its, Sampler &rng) c
         Ray localRay = worldRay;
         if (m_shape->intersect(localRay, its, rng)) {
             its.instance = this;
+            // why dont we return true here?
         }
         return false;
     }
 
     const float previousT = its.t;
     Ray localRay;
-    NOT_IMPLEMENTED
-
+    localRay = m_transform->inverse(worldRay).normalized();
+    its.t = (localRay.origin - m_transform->inverse(its.position)).length();
+    
     // hints:
     // * transform the ray (do not forget to normalize!)
     // * how does its.t need to change?
@@ -34,9 +46,10 @@ bool Instance::intersect(const Ray &worldRay, Intersection &its, Sampler &rng) c
     const bool wasIntersected = m_shape->intersect(localRay, its, rng);
     if (wasIntersected) {
         // hint: how does its.t need to change?
-
+        
         its.instance = this;
         transformFrame(its);
+        its.t = (its.position - worldRay.origin).length();
     } else {
         its.t = previousT;
     }

@@ -36,7 +36,6 @@ public:
         if (m_remap)
         {
             normal = (normal + Vector(1.f)) / 2.f;
-            //normal = normal.normalized();
         }
         
         return Color(normal);

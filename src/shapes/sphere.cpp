@@ -16,14 +16,9 @@ class Sphere : public Shape {
         surf.uv.x() = (position.x() + 1) / 2;
         surf.uv.y() = (position.y() + 1) / 2;
 
-        // TODO fix the tangent and bitangent...
-        // I dont know how they point on a sphere
-        // the tangent always points in positive x direction
-        surf.frame.tangent = Vector(1, 0, 0);
-        // the bitagent always points in positive y direction
-        surf.frame.bitangent = Vector(0, 1, 0);
-        // and accordingly, the normal always points away from the center
-        surf.frame.normal = Vector(position);
+        surf.frame.normal = Vector(position).normalized();
+        surf.frame.tangent = surf.frame.normal.cross(Vector(1,0,0) + surf.frame.normal).normalized();
+        surf.frame.bitangent = -1 * surf.frame.normal.cross(surf.frame.tangent).normalized();
 
         // TODO
         surf.pdf = 0;
