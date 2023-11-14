@@ -30,6 +30,7 @@ bool Instance::intersect(const Ray &worldRay, Intersection &its, Sampler &rng) c
         if (m_shape->intersect(localRay, its, rng)) {
             its.instance = this;
             // why dont we return true here?
+            return true;
         }
         return false;
     }
@@ -37,7 +38,8 @@ bool Instance::intersect(const Ray &worldRay, Intersection &its, Sampler &rng) c
     const float previousT = its.t;
     Ray localRay;
     localRay = m_transform->inverse(worldRay).normalized();
-    its.t = (localRay.origin - m_transform->inverse(its.position)).length();
+    if (its.instance != nullptr)
+        its.t = (localRay.origin - m_transform->inverse(its.position)).length();
     
     // hints:
     // * transform the ray (do not forget to normalize!)
@@ -50,6 +52,7 @@ bool Instance::intersect(const Ray &worldRay, Intersection &its, Sampler &rng) c
         its.instance = this;
         transformFrame(its);
         its.t = (its.position - worldRay.origin).length();
+        return true;
     } else {
         its.t = previousT;
     }
