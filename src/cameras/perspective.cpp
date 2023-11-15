@@ -21,25 +21,25 @@ public:
         const float fov = properties.get<float>("fov");
         const std::string fovAxis = properties.get<std::string>("fovAxis");
 
-        float halfLengthOfFOVAxis = tan((Pi/180.f)*(fov/2.f));
+        float halfLengthOfFOVAxis = tan(Deg2Rad*(fov/2.f));
 
-        if (fovAxis == "x")
-        {
+        if (fovAxis == "x") {
             // compute functions to get from 2d pixels on image plane to 3d camera coordinates
             lengthOfImagePlaneX = halfLengthOfFOVAxis;
 
             // length of the y axis of the image plane is proportional to the x axis length
             // taking the aspect ratio into account
-            lengthOfImagePlaneY = lengthOfImagePlaneX * (((float) m_resolution[1]) / m_resolution[0]);
-        }
-        else
-        {
+            lengthOfImagePlaneY = lengthOfImagePlaneX * ((static_cast<float>(m_resolution[1])) / m_resolution[0]);
+        } else if (fovAxis == "y") {
             // compute functions to get from 2d pixels on image plane to 3d camera coordinates
             lengthOfImagePlaneY = halfLengthOfFOVAxis;
 
             // length of the y axis of the image plane is proportional to the x axis length
             // taking the aspect ratio into account
-            lengthOfImagePlaneX = lengthOfImagePlaneY * (((float) this->m_resolution[0]) / m_resolution[1]);
+            lengthOfImagePlaneX = lengthOfImagePlaneY * ((static_cast<float>(this->m_resolution[0])) / m_resolution[1]);
+        } else {
+            // Any fov axis other than "x" or "y" is invalid
+            logger(EWarn, "FOV Axis other than x or y in scene found!");
         }
          
 
