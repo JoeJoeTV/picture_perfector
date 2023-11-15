@@ -34,93 +34,95 @@ protected:
         return int(m_triangles.size());
     }
 
-    /**
-     * @brief Constructs a surface event for a given position, used by @ref intersect to populate the @ref Intersection
-     * and by @ref sampleArea to populate the @ref AreaSample .
-     * @param surf The surface event to populate with texture coordinates, shading frame and area pdf
-     * @param position The hitpoint (i.e., point in [-1,-1,0] to [+1,+1,0]), found via intersection or area sampling
-     */
-    inline void populate(SurfaceEvent &surf, const Point &position, const Vertex v0, const Vertex v1, const Vertex v2) const {
-        surf.position = position;
-        
-        // map the position from [-1,-1,0]..[+1,+1,0] to [0,0]..[1,1] by discarding the z component and rescaling
-        // I did not yet adjust this!
-        surf.uv.x() = (position.x() + 1) / 2;
-        surf.uv.y() = (position.y() + 1) / 2;
-
-        // TODO fix the tangent and bitangent...
-        // I dont know how they point on a sphere
-        // the tangent always points in positive x direction
-        surf.frame.tangent = Vector(1, 0, 0);
-        // the bitagent always points in positive y direction
-        surf.frame.bitangent = Vector(0, 1, 0);
-        // and accordingly, the normal always points away from the center
-        if (m_smoothNormals) {
-            //surf.frame.normal = Vertex::interpolate(position, v0, v1, v2);
-        }
-        surf.frame.normal = Vector(position);
-
-        // TODO
-        surf.pdf = 0;
-    }
-
     bool intersect(int primitiveIndex, const Ray &ray, Intersection &its, Sampler &rng) const override {
-        // get vertices
-        Vertex v0 = m_vertices[m_triangles[primitiveIndex][0]];
-        Vertex v1 = m_vertices[m_triangles[primitiveIndex][1]];
-        Vertex v2 = m_vertices[m_triangles[primitiveIndex][2]];
+        Vector3i triangle = m_triangles[primitiveIndex];
 
-        float a, f, u, v;
-        Vector edge1 = v1.position - v0.position;
-        Vector edge2 = v2.position - v0.position;
-        Vector h = ray.direction.cross(edge2);
-        a = edge1.dot(h);
+        Vertex vertex1 = m_vertices[triangle[0]];   // "Start" vertex
+        Vertex vertex2 = m_vertices[triangle[1]];
+        Vertex vertex3 = m_vertices[triangle[2]];
 
-        if (a > -Epsilon && a < Epsilon)
-            return false;    // This ray is parallel to this triangle.
+        const Vector planeEdge1 = vertex2.position - vertex1.position;    // v1 -> v2  => e1
+        const Vector planeEdge2 = vertex3.position - vertex1.position;    // v1 -> v3  => e2
 
-        f = 1.0 / a;
-        Vector s = ray.origin - v0.position;
-        u = f * s.dot(h);
+        // Solve    o + t * d = v_0 + w_1 * (v_1 - v_0) + w_2 * (v_2 - v_0)     (Barycentric coordinates in triangle and ray equation)
+        //       => w_1 * e_1 + w_2 * e_2 - t * d = o - v_0
+        //
+        // -> Solve System of Linear Equations:
+        //
+        //      /   -d_x    e_1x    e_2x \   / t   \.
+        //      |   -d_y    e_1y    e_2y | * | w_1 |  =  o - v_0
+        //      \   -d_z    e_1z    e_2z /   \ w_2 /     
+        //
+        // -> The triple product of three vectors can be used to calculate the determinant of the matrix with them as column vectors
+        // -> Use Cramer's rule in addition
 
-        if (u < 0.0 || u > 1.0)
-            return false;
+        // Calculate determinant of original matrix using triple product
+        const Vector crossRayEdge2 = ray.direction.cross(planeEdge2);
+        const float matrixDet = planeEdge1.dot(crossRayEdge2);
 
-        Vector q = s.cross(edge1);
-        v = f * ray.direction.dot(q);
-
-        if (v < 0.0 || u + v > 1.0)
-            return false;
-
-        // At this stage we can compute t to find out where the intersection point is on the line.
-        float t = f * edge2.dot(q);
-
-        if (t < Epsilon) // ray intersection
-        {
-            return false;
-        }
-        
-        if (its.t < t)
-        {
+        // If determinant, thus the triple product is 0, the ray is in the plane of the triangle
+        if ((-Epsilon < matrixDet) and (matrixDet < Epsilon)) {
             return false;
         }
 
+        // Factor to scale other determinant by (Multiply by this instead of dividing every time)
+        const float scaleFactor = 1.0f / matrixDet;
+
+        // Get right side vector of equation (distance from ray origin to first vertex of triangle)
+        const Vector rayToVert = ray.origin - vertex1.position;
+
+        // Get first barycentric coordinate from determinant using Cramer's rule
+        const float baryU = rayToVert.dot(crossRayEdge2) * scaleFactor;
+
+        // Since we're working with barycentric coordinates, we know that each coordinate can't be less than 0 or greater than 1 to be in the triangle
+        if ((baryU < 0.0f) or (baryU > 1.0f)) {
+            return false;
+        }
+
+        // Calculate second barycentric coordinate
+        const Vector crossRayToVertEdge1 = rayToVert.cross(planeEdge1);
+
+        const float baryV = ray.direction.dot(crossRayToVertEdge1) * scaleFactor;
+
+        // Again, check that the barycentric coordinate is in bounds
+        if ((baryV < 0.0f) or (baryU + baryV > 1.0f)) {
+            return false;
+        }
+
+        // Calculate hit point of ray on triangle
+        const float t = planeEdge2.dot(crossRayToVertEdge1) * scaleFactor;
+
+        const Point hitPoint = ray(t);
+
+        // If hit is too small or close hit already exists, don't update
+        if (t < Epsilon || t > its.t) {
+            return false;
+        }
+
+        // We have successfully found a hit, so update intersection
         its.t = t;
-        Point position = ray(t);
-        //populate(its, position);
-        its.position = position;
+        its.position = hitPoint;
 
-        if (m_smoothNormals) {
-            its.frame.normal = Vertex::interpolate(Vector2(u, v), v0, v1, v2).normal.normalized();
+        const Vertex interpolatedVertex = Vertex::interpolate(Vector2(baryU, baryV), vertex1, vertex2, vertex3);
+
+        its.uv = interpolatedVertex.texcoords;
+
+        // Use one triangle edge as tangent and get bitangent from cross product
+        if (this->m_smoothNormals) {
+            its.frame.normal = interpolatedVertex.normal.normalized();
+            its.frame.tangent = interpolatedVertex.normal.cross(planeEdge1).normalized();
+            its.frame.bitangent = interpolatedVertex.normal.cross(its.frame.tangent).normalized();
         } else {
-            its.frame.normal = edge1.cross(edge2).normalized();
+            const Vector normal = planeEdge1.cross(planeEdge2).normalized();
+
+            its.frame.normal = normal;
+            its.frame.tangent = planeEdge1.normalized();
+            its.frame.bitangent = normal.cross(planeEdge1).normalized();
         }
 
-        its.frame.tangent = edge1.normalized();
-        its.frame.bitangent = edge1.cross(its.frame.normal).normalized();
+        its.pdf = 0.0f;
 
         return true;
-        //
 
         // hints:
         // * use m_triangles[primitiveIndex] to get the vertex indices of the triangle that should be intersected
@@ -130,31 +132,34 @@ protected:
     }
 
     Bounds getBoundingBox(int primitiveIndex) const override {
-        float maxX, maxY, maxZ;
-        float minX, minY, minZ;
+        Vector3i triangle = m_triangles[primitiveIndex];
 
-        Vertex v0 = m_vertices[m_triangles[primitiveIndex][0]];
-        Vertex v1 = m_vertices[m_triangles[primitiveIndex][1]];
-        Vertex v2 = m_vertices[m_triangles[primitiveIndex][2]];
+        Vertex vertex1 = m_vertices[triangle[0]];
+        Vertex vertex2 = m_vertices[triangle[1]];
+        Vertex vertex3 = m_vertices[triangle[2]];
 
-        maxX = max(v0.position[0], max(v1.position[0], v2.position[0]));
-        maxY = max(v0.position[1], max(v1.position[1], v2.position[1]));
-        maxZ = max(v0.position[2], max(v1.position[2], v2.position[2]));
+        float minX = min(vertex1.position.x(), min(vertex2.position.x(), vertex3.position.x()));
+        float minY = min(vertex1.position.y(), min(vertex2.position.y(), vertex3.position.y()));
+        float minZ = min(vertex1.position.z(), min(vertex2.position.z(), vertex3.position.z()));
+        float maxX = max(vertex1.position.x(), max(vertex2.position.x(), vertex3.position.x()));
+        float maxY = max(vertex1.position.y(), max(vertex2.position.y(), vertex3.position.y()));
+        float maxZ = max(vertex1.position.z(), max(vertex2.position.z(), vertex3.position.z()));
 
-        minX = min(v0.position[0], min(v1.position[0], v2.position[0]));
-        minY = min(v0.position[1], min(v1.position[1], v2.position[1]));
-        minZ = min(v0.position[2], min(v1.position[2], v2.position[2]));
-        return Bounds(Point { minX, minY, minZ }, Point { maxX, maxY, maxZ });
+        return Bounds(Point{minX, minY, minZ}, Point{maxX, maxY, maxZ});
     }
 
     Point getCentroid(int primitiveIndex) const override {
-        Vertex v0 = m_vertices[m_triangles[primitiveIndex][0]];
-        Vertex v1 = m_vertices[m_triangles[primitiveIndex][1]];
-        Vertex v2 = m_vertices[m_triangles[primitiveIndex][2]];
+        Vector3i triangle = m_triangles[primitiveIndex];
 
-        return Point((v0.position[0]+v1.position[0]+v2.position[0]) / 3.f, 
-                     (v0.position[1]+v1.position[1]+v2.position[1]) / 3.f,
-                     (v0.position[2]+v1.position[2]+v2.position[2]) / 3.f);
+        Vertex vertex1 = m_vertices[triangle[0]];
+        Vertex vertex2 = m_vertices[triangle[1]];
+        Vertex vertex3 = m_vertices[triangle[2]];
+
+        return Point(
+            (vertex1.position.x() + vertex2.position.x() + vertex3.position.x()) / 3,
+            (vertex1.position.y() + vertex2.position.y() + vertex3.position.y()) / 3,
+            (vertex1.position.z() + vertex2.position.z() + vertex3.position.z()) / 3
+        );
     }
 
 public:
