@@ -56,7 +56,7 @@ endfunction()
 file(GLOB_RECURSE SOURCE_FILES CONFIGURE_DEPENDS "src/**/*.cpp" "src/**/*.hpp" "include/*.hpp")
 
 # ######################
-set(MY_TARGET_NAME unnamed) # Change `unnamed` to your favourite own executable name
+set(MY_TARGET_NAME glorious_scene_beautifier) # Change `unnamed` to your favourite own executable name
 # ######################
 
 find_package(OpenImageDenoise)

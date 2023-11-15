@@ -9,6 +9,7 @@
 #include <mutex>
 
 #include <lightwave/color.hpp>
+#include <lightwave/logger.hpp>
 
 #ifdef LW_DEBUG
 // if you feel uncomfortable debugging multi-threaded code, feel free to enable this define and compile in Debug mode
@@ -100,12 +101,12 @@ inline float atomicAdd(float &dst, float delta) {
  */
 inline int64_t atomicAdd(int64_t &dst, int64_t delta) {
 #if defined(_MSC_VER)
-  #if defined(_WIN64)
-    return _InterlockedExchangeAdd64(reinterpret_cast<volatile int64_t *>(&dst), delta) + delta;
-  #else
-    SLog(EError, "atomicAdd() cannot handle 64-bit integers on WIN32");
-    return 0;
-  #endif
+    #if defined(_WIN64)
+        return _InterlockedExchangeAdd64(reinterpret_cast<volatile int64_t *>(&dst), delta) + delta;
+    #else
+        logger(EError, "atomicAdd() cannot handle 64-bit integers on WIN32");
+        return 0;
+    #endif
 #else
     return __sync_add_and_fetch(&dst, delta);
 #endif

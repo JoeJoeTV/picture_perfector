@@ -19,13 +19,29 @@ public:
     Perspective(const Properties &properties)
     : Camera(properties) {
         const float fov = properties.get<float>("fov");
+        const std::string fovAxis = properties.get<std::string>("fovAxis");
 
-        // compute functions to get from 2d pixels on image plane to 3d camera coordinates
-        lengthOfImagePlaneX = sin(fov/2.0);
+        float halfLengthOfFOVAxis = tan((Pi/180.f)*(fov/2.f));
 
-        // length of the y axis of the image plane is proportional to the x axis length
-        // taking the aspect ratio into account
-        lengthOfImagePlaneY = lengthOfImagePlaneX * (m_resolution[1] / m_resolution[0]);
+        if (fovAxis == "x")
+        {
+            // compute functions to get from 2d pixels on image plane to 3d camera coordinates
+            lengthOfImagePlaneX = halfLengthOfFOVAxis;
+
+            // length of the y axis of the image plane is proportional to the x axis length
+            // taking the aspect ratio into account
+            lengthOfImagePlaneY = lengthOfImagePlaneX * (((float) m_resolution[1]) / m_resolution[0]);
+        }
+        else
+        {
+            // compute functions to get from 2d pixels on image plane to 3d camera coordinates
+            lengthOfImagePlaneY = halfLengthOfFOVAxis;
+
+            // length of the y axis of the image plane is proportional to the x axis length
+            // taking the aspect ratio into account
+            lengthOfImagePlaneX = lengthOfImagePlaneY * (((float) this->m_resolution[0]) / m_resolution[1]);
+        }
+         
 
         // hints:
         // * precompute any expensive operations here (most importantly trigonometric functions)
@@ -37,11 +53,11 @@ public:
         // and create a ray from camera origin through the point on the image plain
         Ray ray = Ray(Vector(0.f, 0.f, 0.f), 
                   Vector(normalized.x()*lengthOfImagePlaneX, 
-                          normalized.y()*-lengthOfImagePlaneY, 
+                          normalized.y()*lengthOfImagePlaneY, 
                           1.f));
               
         // transform the ray to the world coordinate system
-        ray = (*m_transform).apply(ray);
+        ray = m_transform->apply(ray);
 
         // normalize the ray
         ray = ray.normalized();
