@@ -10,7 +10,7 @@ public:
     : SamplingIntegrator(properties) {
         // to parse properties from the scene description, use properties.get(name, default_value)
         // you can also omit the default value if you want to require the user to specify a value
-        //m_remap = properties.get<bool>("remap", true);
+        // m_remap = properties.get<bool>("remap", true);
     }
 
     /**
@@ -29,16 +29,13 @@ public:
         // sample the bsdf of the hit instance
         BsdfSample sample = its.instance->bsdf()->sample(its.uv, its.wo, rng);
 
-        // update weight of the original ray
-        // not neccesary since we only have one weight so far.
-        //its.weight *= sample.weight;
-
         // trace secondary ray
-        Ray secondaryRay = Ray(its.position, sample.wi);
+        Vector directionVectorSecondRay = its.frame.toWorld(sample.wi).normalized();
+        Ray secondaryRay = Ray(its.position, directionVectorSecondRay);
         Intersection its2 = m_scene->intersect(secondaryRay, rng);
 
         if (!its2) {
-            // no hit occured and we update the weight by the light
+            // no hit occured -> update the weight with the light
             sample.weight *= (m_scene->evaluateBackground(secondaryRay.direction)).value;
         } else {
             sample.weight = Color(0.f);

@@ -13,15 +13,17 @@ public:
     BsdfSample sample(const Point2 &uv, const Vector &wo,
                       Sampler &rng) const override {
         // sample an outgoing ray w1 where normal is in z direction 
-        Vector wi = squareToCosineHemisphere(rng.next2D());
+        Vector wi = squareToUniformHemisphere(rng.next2D());
+        //Vector wi = squareToCosineHemisphere(rng.next2D());
 
         // calculate the weight of the ray
-        // scale it by the weight of the sample f(w1,wi) = albedo / PI
+        // scale it by the weight of the sample f(wi,wo) = albedo / PI
         // propability of a ray along the hemisphere is 1/2*PI
         // sample with cosine weighted hemisphere instead of uniform
         // finaly, account for foreshortening with cos(wi) = wi.dot(normal) / (len(wi) * len(normal))
         float foreshortening = wi.dot(Vector(0,0,1));
-        Color weight = (m_albedo->evaluate(uv) * (2*Pi * foreshortening)) / Pi;
+        Color weight = ((m_albedo->evaluate(uv)/Pi) * foreshortening / uniformHemispherePdf());
+        //Color weight = ((m_albedo->evaluate(uv)/Pi) * foreshortening / (cosineHemispherePdf(wi)+Epsilon));
 
         return BsdfSample{
             .wi = wi.normalized(),
