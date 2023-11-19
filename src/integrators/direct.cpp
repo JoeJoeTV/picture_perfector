@@ -38,7 +38,7 @@ public:
             // no hit occured -> update the weight with the light
             sample.weight *= (m_scene->evaluateBackground(secondaryRay.direction)).value;
         } else {
-            sample.weight = Color(0.f);
+            sample.weight *= its2.evaluateEmission();
         }
 
         return Color(sample.weight);
