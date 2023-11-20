@@ -1,4 +1,5 @@
 #include <lightwave.hpp>
+#include "sdf/sdfshape.hpp"
 
 namespace lightwave {
 
@@ -25,15 +26,28 @@ class SDF : public Shape {
 
     /// @brief The epsilon used to estimate the normal vectors for hit points
     float m_normalEpsilon;
+
+    /// @brief The actual sdf to use for distance estimation
+    ref<SDFShape> m_sdfChild;
 public:
     SDF(const Properties &properties) {
         this->m_maxSteps = properties.get<int>("maxSteps", 50);
         this->m_minDistance = properties.get<float>("minDistance", 0.01f);
         this->m_normalEpsilon = this->m_minDistance;
+
+        this->m_sdfChild = properties.getChild<SDFShape>();
     }
 
     float estimateDistance(const Point p) const {
-        return max(cubeSDF(p, Point{1.5f, 1.0f, 0.5f}), sphereSDF(p, Point{0.0f, 0.0f, 0.0f}, 1.0f));
+        //return max(cubeSDF(p, Point{1.5f, 1.0f, 0.5f}), sphereSDF(p, Point{0.0f, 0.0f, 0.0f}, 1.0f));
+        static bool wasCalled = false;
+
+        if (!wasCalled) {
+            logger(EInfo, "[SDF] 'estimateDistance' called!");
+            wasCalled = true;
+        }
+
+        return this->m_sdfChild->estimateDistance(p);
     }
 
     bool intersect(const Ray &ray, Intersection &its, Sampler &rng) const override {
