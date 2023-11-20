@@ -3,19 +3,6 @@
 
 namespace lightwave {
 
-static float sphereSDF(const Point p, const Point center, const float radius) {
-    return (p - center).length() - radius;
-} 
-
-static float cubeSDF(const Point p, const Point corner) {
-    Point absP = Point{abs(p.x()), abs(p.y()), abs(p.z())};
-
-    Vector q = absP - corner;
-    Vector maxQ0 = Vector{max(q.x(), 0.0f), max(q.y(), 0.0f), max(q.z(), 0.0f)};
-    
-    return maxQ0.length() + min(max(q.x(), max(q.y(), q.z())), 0.0f);
-}
-
 /// @brief A Sphere with radius 1 centered at (0,0,0)
 class SDF : public Shape {
     /// @brief Maximum amount of ray-marching steps to take before counting as no intersection
@@ -39,14 +26,6 @@ public:
     }
 
     float estimateDistance(const Point p) const {
-        //return max(cubeSDF(p, Point{1.5f, 1.0f, 0.5f}), sphereSDF(p, Point{0.0f, 0.0f, 0.0f}, 1.0f));
-        static bool wasCalled = false;
-
-        if (!wasCalled) {
-            logger(EInfo, "[SDF] 'estimateDistance' called!");
-            wasCalled = true;
-        }
-
         return this->m_sdfChild->estimateDistance(p);
     }
 

@@ -20,13 +20,6 @@ public:
     }
 
     float estimateDistance(const Point p) const override {
-        static bool wasCalled = false;
-
-        if (!wasCalled) {
-            logger(EInfo, "[SDFmax] 'estimateDistance' called!");
-            wasCalled = true;
-        }
-
         return max(this->m_leftSDF->estimateDistance(p), this->m_rightSDF->estimateDistance(p));
     }
 
