@@ -22,23 +22,28 @@ public:
         Intersection its = m_scene->intersect(ray, rng);
 
         // if no intersection occured
-        if (!its) {
+        if (its.instance == nullptr) {
             return (m_scene->evaluateBackground(ray.direction)).value;
         }
 
         // sample the bsdf of the hit instance
-        BsdfSample sample = its.instance->bsdf()->sample(its.uv, its.wo, rng);
-
+        BsdfSample sample = its.sampleBsdf(rng);
+        //BsdfSample sample = its.instance->bsdf()->sample(its.uv, its.wo, rng);
+        
+        // update weight of sample to account for emission if there are emissions
+        sample.weight += its.evaluateEmission();
+        
         // trace secondary ray
-        Vector directionVectorSecondRay = its.frame.toWorld(sample.wi).normalized();
+        Vector directionVectorSecondRay = sample.wi.normalized();
         Ray secondaryRay = Ray(its.position, directionVectorSecondRay);
         Intersection its2 = m_scene->intersect(secondaryRay, rng);
 
-        if (!its2) {
+        if (its2.instance == nullptr) {
             // no hit occured -> update the weight with the light
-            sample.weight *= (m_scene->evaluateBackground(secondaryRay.direction)).value;
+            sample.weight *= (m_scene->evaluateBackground(secondaryRay.direction)).value;    
         } else {
             sample.weight *= its2.evaluateEmission();
+            //sample.weight = Color(0.f);
         }
 
         return Color(sample.weight);
