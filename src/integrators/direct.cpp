@@ -28,10 +28,9 @@ public:
 
         // sample the bsdf of the hit instance
         BsdfSample sample = its.sampleBsdf(rng);
-        //BsdfSample sample = its.instance->bsdf()->sample(its.uv, its.wo, rng);
         
         // update weight of sample to account for emission if there are emissions
-        sample.weight += its.evaluateEmission();
+        Color emissions = its.evaluateEmission();
         
         // trace secondary ray
         Vector directionVectorSecondRay = sample.wi.normalized();
@@ -43,10 +42,9 @@ public:
             sample.weight *= (m_scene->evaluateBackground(secondaryRay.direction)).value;    
         } else {
             sample.weight *= its2.evaluateEmission();
-            //sample.weight = Color(0.f);
         }
 
-        return Color(sample.weight);
+        return Color(sample.weight) + emissions;
     }
 
     /// @brief An optional textual representation of this class, which can be useful for debugging. 
