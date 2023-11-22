@@ -63,12 +63,14 @@ public:
 
         Point2 fixedPointInImagePixels = Point2(fixedPoint[0]*(m_image->bounds().max()[0]-1), 
                                                 (m_image->bounds().max()[1]-1) - fixedPoint[1]*(m_image->bounds().max()[1]-1));
+
         if (m_filter == FilterMode::Nearest) {
             Point2i pixelCoordinates = Point2i(floor(fixedPointInImagePixels[0] + 0.5), 
                                                 floor(fixedPointInImagePixels[1] + 0.5));
 
-            return m_image->get(pixelCoordinates);
+            return m_image->get(pixelCoordinates)*m_exposure;
         } else {
+            // compute the four closest pixel coordintes
             Point2i topRight = Point2i(floor(fixedPointInImagePixels[0] + 1), 
                                                 floor(fixedPointInImagePixels[1] + 1));
             Point2i topLeft = Point2i(floor(fixedPointInImagePixels[0]), 
@@ -78,11 +80,21 @@ public:
             Point2i bottomLeft = Point2i(floor(fixedPointInImagePixels[0]), 
                                                 floor(fixedPointInImagePixels[1]));
 
+            // compute the coordintes of four closenst pixels such that they are in the image
+            Point2i topRightSafe = Point2i(((int) floor(fixedPointInImagePixels[0] + 1)) % (m_image->bounds().max()[0]), 
+                                                ((int) floor(fixedPointInImagePixels[1] + 1)) % (m_image->bounds().max()[1]));
+            Point2i topLeftSafe = Point2i(floor(fixedPointInImagePixels[0]), 
+                                                ((int) floor(fixedPointInImagePixels[1] + 1)) % (m_image->bounds().max()[1]));
+            Point2i bottomRightSafe = Point2i(((int) floor(fixedPointInImagePixels[0] + 1)) % (m_image->bounds().max()[0]), 
+                                                floor(fixedPointInImagePixels[1]));
+            Point2i bottomLeftSafe = Point2i(floor(fixedPointInImagePixels[0]), 
+                                                floor(fixedPointInImagePixels[1]));
+
             // get the values in the image
-            Color colorTopRight = m_image->get(topRight);
-            Color colorTopLeft = m_image->get(topLeft);
-            Color colorBottomRight = m_image->get(bottomRight);
-            Color colorBottomLeft = m_image->get(bottomLeft);
+            Color colorTopRight = m_image->get(topRightSafe);
+            Color colorTopLeft = m_image->get(topLeftSafe);
+            Color colorBottomRight = m_image->get(bottomRightSafe);
+            Color colorBottomLeft = m_image->get(bottomLeftSafe);
 
             // interpolate in x direction
             Color xInterpolatedTop = (topRight[0]- fixedPointInImagePixels[0])*colorTopLeft +
@@ -94,9 +106,8 @@ public:
             Color interpolatedColor = (topRight[1] - fixedPointInImagePixels[1]) * xInterpolatedBottom +
                                       (fixedPointInImagePixels[1] - bottomRight[1]) * xInterpolatedTop;
 
-            return interpolatedColor;
+            return interpolatedColor * m_exposure;
         }
-        return Color(0.f);
     }
 
     std::string toString() const override {
