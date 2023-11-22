@@ -182,8 +182,86 @@ class AccelerationStructure : public Shape {
                     size.y() * size.z());
     }
 
+    /// @brief Evaluates the SAH metric for a specific @param axis and position on the axis @param axisPos
+    /// @param node The node for which the SAH metric should be evaluated
+    /// @param axis The axis which should be used to calculate the cost
+    /// @param axisPos The axis position that should be used for the split
+    /// @return The cost of the split with specified parameters according to the SAH metric
+    float EvaluateSAH(Node &node, int axis, float axisPos) {
+        // The AABBs of the split boxes
+        Bounds leftBox, rightBox;
+        // The amounf of primitives for each box
+        int leftCount = 0;
+        int rightCount = 0;
+
+        for (int i = 0; i < node.primitiveCount; i++) {
+            int primitiveIdx = this->m_primitiveIndices[node.leftFirst + i];
+
+            float primitiveAxisPos = getCentroid(primitiveIdx)[axis];
+            Bounds primitiveBounds = getBoundingBox(primitiveIdx);
+
+            // Add BB of primitive to correct box
+            if (primitiveAxisPos < axisPos) {
+                leftCount++;
+                leftBox.extend(primitiveBounds);
+            } else {
+                rightCount++;
+                rightBox.extend(primitiveBounds);
+            }
+        }
+
+        // Cost = Sum of (Number of primitives * Area of BB) for both boxes
+        float cost = leftCount * surfaceArea(leftBox) + rightCount * surfaceArea(rightBox);
+        
+        return cost > 0 ? cost : Infinity;
+    }
+
     NodeIndex binning(Node &node, int splitAxis) {
-        NOT_IMPLEMENTED
+        // The current best axis for the plit to be on
+        int bestAxis = -1;
+
+        // The current best position on the best axis for the split to be at
+        float bestPos = 0;
+
+        // The current cost achieved using bestAxis and bestCost
+        float bestCost = Infinity;
+
+        // Loop over all axis and primitives in node to calculate best axis ans pos
+        for (int axis = 0; axis < Vector::Dimension; axis++) {
+            for (int i = 0; i < node.primitiveCount; i++) {
+                float primitiveAxisPos = getCentroid(this->m_primitiveIndices[node.leftFirst + i])[axis];
+
+                float cost = EvaluateSAH(node, axis, primitiveAxisPos);
+
+                // If a better axis and position combination is found, update variables with new best
+                if (cost < bestCost) {
+                    bestPos = primitiveAxisPos;
+                    bestAxis = axis;
+                    bestCost = cost;
+                }
+            }
+            
+        }
+
+        splitAxis = bestAxis;
+        float splitPos = bestPos;
+
+        // partition algorithm (you might remember this from quicksort)
+        NodeIndex firstRightIndex   = node.firstPrimitiveIndex();
+        NodeIndex lastLeftIndex     = node.lastPrimitiveIndex();
+
+        while (firstRightIndex <= lastLeftIndex) {
+            if (getCentroid(
+                    m_primitiveIndices[firstRightIndex])[splitAxis] <
+                splitPos) {
+                firstRightIndex++;
+            } else {
+                std::swap(m_primitiveIndices[firstRightIndex],
+                            m_primitiveIndices[lastLeftIndex--]);
+            }
+        }
+        
+        return firstRightIndex;
     }
 
     /// @brief Attempts to subdivide a given BVH node.
@@ -198,7 +276,7 @@ class AccelerationStructure : public Shape {
         const NodeIndex firstPrimitive = parent.firstPrimitiveIndex();
 
         // set to true when implementing binning
-        static constexpr bool UseSAH = false;
+        static constexpr bool UseSAH = true;
 
         // the point at which to split (note that primitives must be re-ordered
         // so that all children of the left node will have a smaller index than
