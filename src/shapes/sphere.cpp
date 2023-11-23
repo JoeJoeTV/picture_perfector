@@ -7,8 +7,8 @@ namespace lightwave {
 /// @return 2D Point containing UV of sphere
 static Point2 getSphereUV(const Point& cartesianPoint) {
     float r = Vector(cartesianPoint).length();
-    float phi = acos(cartesianPoint.z() / r);
-    float theta = atan2(cartesianPoint.y(), cartesianPoint.x());
+    float theta = acos(cartesianPoint.y() / r);
+    float phi = atan2(cartesianPoint.z(), cartesianPoint.x());
 
     return Point2(
         phi / (2 * Pi),
