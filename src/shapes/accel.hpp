@@ -182,69 +182,113 @@ class AccelerationStructure : public Shape {
                     size.y() * size.z());
     }
 
-    /// @brief Evaluates the SAH metric for a specific @param axis and position on the axis @param axisPos
-    /// @param node The node for which the SAH metric should be evaluated
-    /// @param axis The axis which should be used to calculate the cost
-    /// @param axisPos The axis position that should be used for the split
-    /// @return The cost of the split with specified parameters according to the SAH metric
-    float EvaluateSAH(Node &node, int axis, float axisPos) {
-        // The AABBs of the split boxes
-        Bounds leftBox, rightBox;
-        // The amounf of primitives for each box
-        int leftCount = 0;
-        int rightCount = 0;
+    struct Bin {
+        Bounds aabb;
+        int primitiveCount = 0;
+    };
+
+    // How many Bins to use
+    #define BINS 32
+
+    /// @brief Finds the best split plane position in specified @param splitAxis
+    /// @brief and updates @param splitPos accordingly, while returning
+    /// @brief the best cost according to the SAH metric
+    /// @param node The node for which to calculate the best split plane
+    /// @param splitAxis The axis on which the best split plane position should be found
+    /// @param splitPos The split position, which will be updated
+    /// @return The cost of the best split plane
+    /// @note Based upon https://jacco.ompf2.com/2022/04/21/how-to-build-a-bvh-part-3-quick-builds/
+    float FindBestSplitPlane(Node &node, int splitAxis, float &splitPos) {
+        // The current best cost achoived using splitAxis and splitPos
+        float bestCost = Infinity;
+
+        // Bounds containing the primitives in @var node on the split axis
+        float boundAxisMin = Infinity;
+        float boundAxisMax = -Infinity;
+
+        for (int i = 0; i < node.primitiveCount; i++) {
+            float primitiveAxisPos = getCentroid(this->m_primitiveIndices[node.leftFirst + i])[splitAxis];
+
+            boundAxisMin = min(boundAxisMin, primitiveAxisPos);
+            boundAxisMax = max(boundAxisMax, primitiveAxisPos);
+        }
+
+        if (boundAxisMin == boundAxisMax) {
+            return Infinity;
+        }
+
+
+        /// Populate the bins
+
+        Bin bin[BINS];
+
+        // Scale of each bin in relation to bounds
+        float scale = BINS / (boundAxisMax - boundAxisMin);
 
         for (int i = 0; i < node.primitiveCount; i++) {
             int primitiveIdx = this->m_primitiveIndices[node.leftFirst + i];
-
-            float primitiveAxisPos = getCentroid(primitiveIdx)[axis];
+            float primitiveAxisPos = getCentroid(primitiveIdx)[splitAxis];
             Bounds primitiveBounds = getBoundingBox(primitiveIdx);
 
-            // Add BB of primitive to correct box
-            if (primitiveAxisPos < axisPos) {
-                leftCount++;
-                leftBox.extend(primitiveBounds);
-            } else {
-                rightCount++;
-                rightBox.extend(primitiveBounds);
+            int binIdx = min(BINS -1, static_cast<int>((primitiveAxisPos - boundAxisMin) * scale));
+
+            bin[binIdx].primitiveCount++;
+            bin[binIdx].aabb.extend(primitiveBounds);
+        }
+
+        /// Get data required for caolculating cost of all the planes dividing the bins
+        // Data arrays
+        float leftArea[BINS - 1];
+        float rightArea[BINS - 1];
+        int leftCount[BINS - 1];
+        int rightCount[BINS - 1];
+
+        // Bounding boxes for 2 sub-nodes
+        Bounds leftBox;
+        Bounds rightBox;
+
+        // Cumultative primitive counts
+        int leftSum = 0;
+        int rightSum = 0;
+
+        for (int i = 0; i < BINS - 1; i++) {
+            // For left values, from left to right
+            leftSum += bin[i].primitiveCount;
+            leftCount[i] = leftSum;
+            leftBox.extend(bin[i].aabb);
+            leftArea[i] = surfaceArea(leftBox);
+
+            // For right values, from right to left
+            rightSum += bin[BINS - 2 - i].primitiveCount;
+            rightCount[BINS - 2 - i] = rightSum;
+            rightBox.extend(bin[BINS - 2 - i].aabb);
+            rightArea[BINS - 2 - i] = surfaceArea(rightBox);
+        }
+
+        /// Calculate cost for all planes
+        scale = (boundAxisMax - boundAxisMin) / BINS;
+
+        for (int i = 0; i < BINS - 1; i++) {
+            float planeCost = leftCount[i] * leftArea[i] + rightCount[i] * rightArea[i];
+
+            if (planeCost < bestCost) {
+                splitPos = boundAxisMin + scale * (i + 1);
+                bestCost = planeCost;
             }
         }
 
-        // Cost = Sum of (Number of primitives * Area of BB) for both boxes
-        float cost = leftCount * surfaceArea(leftBox) + rightCount * surfaceArea(rightBox);
-        
-        return cost > 0 ? cost : Infinity;
+        return bestCost;
     }
 
+    /// @note Based upon https://jacco.ompf2.com/2022/04/21/how-to-build-a-bvh-part-3-quick-builds/
     NodeIndex binning(Node &node, int splitAxis) {
-        // The current best axis for the plit to be on
-        int bestAxis = -1;
+        // The position on the axis where the split should happen
+        float splitPos;
 
-        // The current best position on the best axis for the split to be at
-        float bestPos = 0;
+        // The cost of splitting at @var splitPos
+        FindBestSplitPlane(node, splitAxis, splitPos);
 
-        // The current cost achieved using bestAxis and bestCost
-        float bestCost = Infinity;
-
-        // Loop over all axis and primitives in node to calculate best axis ans pos
-        for (int axis = 0; axis < Vector::Dimension; axis++) {
-            for (int i = 0; i < node.primitiveCount; i++) {
-                float primitiveAxisPos = getCentroid(this->m_primitiveIndices[node.leftFirst + i])[axis];
-
-                float cost = EvaluateSAH(node, axis, primitiveAxisPos);
-
-                // If a better axis and position combination is found, update variables with new best
-                if (cost < bestCost) {
-                    bestPos = primitiveAxisPos;
-                    bestAxis = axis;
-                    bestCost = cost;
-                }
-            }
-            
-        }
-
-        splitAxis = bestAxis;
-        float splitPos = bestPos;
+        //logger(EInfo, tfm::format("[BVH] (Node: primitiveCount: %d) Best splitAxis: %d     Best splitPos: %f   Best splitCost: %f", node.primitiveCount, splitAxis, splitPos, splitCost).c_str());
 
         // partition algorithm (you might remember this from quicksort)
         NodeIndex firstRightIndex   = node.firstPrimitiveIndex();
