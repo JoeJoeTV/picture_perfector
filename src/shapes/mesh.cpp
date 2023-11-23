@@ -61,7 +61,7 @@ protected:
         const float matrixDet = planeEdge1.dot(crossRayEdge2);
 
         // If determinant, thus the triple product is 0, the ray is in the plane of the triangle
-        if ((-Epsilon < matrixDet) and (matrixDet < Epsilon)) {
+        if ((-1e-8f < matrixDet) and (matrixDet < 1e-8f)) {
             return false;
         }
 
