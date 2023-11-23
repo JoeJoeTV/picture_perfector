@@ -287,9 +287,6 @@ class AccelerationStructure : public Shape {
 
         // The cost of splitting at @var splitPos
         FindBestSplitPlane(node, splitAxis, splitPos);
-
-        //logger(EInfo, tfm::format("[BVH] (Node: primitiveCount: %d) Best splitAxis: %d     Best splitPos: %f   Best splitCost: %f", node.primitiveCount, splitAxis, splitPos, splitCost).c_str());
-
         // partition algorithm (you might remember this from quicksort)
         NodeIndex firstRightIndex   = node.firstPrimitiveIndex();
         NodeIndex lastLeftIndex     = node.lastPrimitiveIndex();
