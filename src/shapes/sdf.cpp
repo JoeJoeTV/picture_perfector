@@ -34,16 +34,18 @@ public:
         int steps;
 
         for (steps = 0; steps < this->m_maxSteps; steps++) {
-            if (marchDistance > its.t) {
-                return false;
-            }
-
             Point currPoint = ray(marchDistance);
 
             float distance = this->estimateDistance(currPoint);
 
             marchDistance += distance;
 
+            // If distance is too large, we know that we don't have a (new) intersection and can directly abort
+            if ((marchDistance > its.t) or (marchDistance >= Infinity) or (marchDistance < 0)) {
+                return false;
+            }
+
+            // If the distance is smaller than the threshold, we can count this as a hit on the object and return the intersection
             if (distance < this->m_minDistance) {
                 break;
             }
@@ -57,9 +59,11 @@ public:
 
         Point hitP = ray(marchDistance);
 
-        its.position = hitP;
+        // Since we don't have texture coordinates, store amount of steps used in UV
+        its.uv[0] = static_cast<float>(steps) / this->m_maxSteps;
+        its.uv[1] = 0;
 
-        its.frame.normal = (Vector{1.0f, 1.0f, 1.0f} * (1.0-static_cast<float>(steps)/static_cast<float>(this->m_maxSteps)));
+        its.position = hitP;
 
         its.frame.normal = Vector{
             this->estimateDistance(hitP + Vector{1.0, 0.0f, 0.0f} * this->m_normalEpsilon) - this->estimateDistance(hitP - Vector{1.0f, 0.0f, 0.0f} * this->m_normalEpsilon),
@@ -73,6 +77,7 @@ public:
     }
 
     Bounds getBoundingBox() const override {
+        // TODO: Change this to something resonable
         return Bounds(
             Point{5.0f, 5.0f, 5.0f},
             Point{-5.0f, -5.0f, -5.0f}
@@ -88,7 +93,16 @@ public:
     }
     
     std::string toString() const override {
-        return "SDF[]";
+        return tfm::format(
+            "SDF[\n"
+            "  maxSteps = %d,\n"
+            "  minDistance = %f,\n"
+            "  childSDF = %s,\n"
+            "]",
+            this->m_maxSteps,
+            this->m_minDistance,
+            indent(this->m_sdfChild)
+        );
     }
 };
 
