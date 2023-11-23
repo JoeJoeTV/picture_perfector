@@ -190,9 +190,9 @@ class AccelerationStructure : public Shape {
     // How many Bins to use
     #define BINS 32
 
-    /// @brief Finds the best split plane position in specified @param splitAxis
-    /// @brief and updates @param splitPos accordingly, while returning
-    /// @brief the best cost according to the SAH metric
+    /// @brief  Finds the best split plane position in specified @param splitAxis
+    ///         and updates @param splitPos accordingly, while returning
+    ///         the best cost according to the SAH metric
     /// @param node The node for which to calculate the best split plane
     /// @param splitAxis The axis on which the best split plane position should be found
     /// @param splitPos The split position, which will be updated
