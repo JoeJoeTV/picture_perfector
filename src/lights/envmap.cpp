@@ -16,12 +16,24 @@ public:
     }
 
     BackgroundLightEval evaluate(const Vector &direction) const override {
-        Vector2 warped = Vector2(0, 0);
         // hints:
         // * if (m_transform) { transform direction vector from world to local
         // coordinates }
         // * find the corresponding pixel coordinate for the given local
         // direction
+
+        Vector newDirection = direction.normalized();
+
+        if (this->m_transform) {
+            newDirection = this->m_transform->inverse(direction).normalized();
+        }
+
+        // Get theta angle (y points up, so take cos^-1 of y value)
+        const float theta = acos(newDirection.y());
+        const float phi = atan2(newDirection.z(), newDirection.x());
+
+        Vector2 warped = Vector2((phi + Pi) * Inv2Pi, theta * InvPi);
+
         return {
             .value = m_texture->evaluate(warped),
         };
