@@ -30,7 +30,7 @@ public:
 
         // Get theta angle (y points up, so take cos^-1 of y value)
         const float theta = acos(newDirection.y());
-        const float phi = atan2(newDirection.z(), newDirection.x());
+        const float phi = -atan2(newDirection.z(), newDirection.x());
 
         Vector2 warped = Vector2((phi + Pi) * Inv2Pi, theta * InvPi);
 
