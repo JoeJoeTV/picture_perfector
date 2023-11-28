@@ -78,6 +78,15 @@ public:
         }
     }
 
+    Bounds getBoundingBox() const override {
+        Bounds bounds = Bounds();
+
+        bounds.extend(this->m_leftSDF->getBoundingBox());
+        bounds.extend(this->m_rightSDF->getBoundingBox());
+
+        return bounds;
+    }
+
     std::string toString() const override {
         return tfm::format(
             "SDFCombine[\n"

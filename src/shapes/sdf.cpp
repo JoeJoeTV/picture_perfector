@@ -77,11 +77,7 @@ public:
     }
 
     Bounds getBoundingBox() const override {
-        // TODO: Change this to something resonable
-        return Bounds(
-            Point{5.0f, 5.0f, 5.0f},
-            Point{-5.0f, -5.0f, -5.0f}
-        );
+        return this->m_sdfChild->getBoundingBox();
     }
 
     Point getCentroid() const override {

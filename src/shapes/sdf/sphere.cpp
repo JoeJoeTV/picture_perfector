@@ -28,6 +28,18 @@ public:
         return (transP - Point{0.0f, 0.0f, 0.0f}).length() - this->m_radius;
     }
 
+    Bounds getBoundingBox() const override {
+        Point maxP = Point(0.0f, 0.0f, 0.0f) + (Vector{1, 1, 1} * this->m_radius);
+        Point minP = Point(0.0f, 0.0f, 0.0f) + (Vector{-1, -1, -1} * this->m_radius);
+
+        if (this->m_transform) {
+            maxP = this->m_transform->apply(maxP);
+            minP = this->m_transform->apply(minP);
+        }
+
+        return Bounds(minP, maxP);
+    }
+
     std::string toString() const override {
         return tfm::format(
             "SDFSphere[\n"

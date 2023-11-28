@@ -43,6 +43,18 @@ public:
         return maxQ0.length() + min(max(q.x(), max(q.y(), q.z())), 0.0f) - this->m_cornerRadius;
     }
 
+    Bounds getBoundingBox() const override {
+        Point maxP = this->m_corner + Vector(this->m_cornerRadius);
+        Point minP = Point(-Vector(this->m_corner)) - Vector(this->m_cornerRadius);
+
+        if (this->m_transform) {
+            maxP = this->m_transform->apply(maxP);
+            minP = this->m_transform->apply(minP);
+        }
+
+        return Bounds(minP, maxP);
+    }
+
     std::string toString() const override {
         return tfm::format(
             "SDFBox[\n"
