@@ -16,6 +16,10 @@ class SDF : public Shape {
 
     /// @brief The actual sdf to use for distance estimation
     ref<SDFShape> m_sdfChild;
+
+    /// @brief The Bunds of the SDF object. Will be pre-computed in constructor
+    Bounds m_bounds;
+
 public:
     SDF(const Properties &properties) {
         this->m_maxSteps = properties.get<int>("maxSteps", 50);
@@ -23,6 +27,9 @@ public:
         this->m_normalEpsilon = this->m_minDistance;
 
         this->m_sdfChild = properties.getChild<SDFShape>();
+
+        // Pre-compute bounding box
+        this->m_bounds = this->m_sdfChild->getBoundingBox();
     }
 
     float estimateDistance(const Point p) const {
@@ -84,7 +91,7 @@ public:
     }
 
     Bounds getBoundingBox() const override {
-        return this->m_sdfChild->getBoundingBox();
+        return Bounds(this->m_bounds);
     }
 
     Point getCentroid() const override {
