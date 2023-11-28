@@ -44,13 +44,31 @@ public:
     }
 
     Bounds getBoundingBox() const override {
-        Point maxP = this->m_corner + Vector(this->m_cornerRadius);
-        Point minP = Point(-Vector(this->m_corner)) - Vector(this->m_cornerRadius);
+        Point origin = Point(0.0f);
+        Vector xVec = Vector(this->m_corner.x(), 0.0f, 0.0f);
+        Vector yVec = Vector(0.0f, this->m_corner.y(), 0.0f);
+        Vector zVec = Vector(0.0f, 0.0f, this->m_corner.z());
 
         if (this->m_transform) {
-            maxP = this->m_transform->apply(maxP);
-            minP = this->m_transform->apply(minP);
+            origin = this->m_transform->apply(origin);
+            xVec = this->m_transform->apply(xVec);
+            yVec = this->m_transform->apply(yVec);
+            zVec = this->m_transform->apply(zVec);
         }
+
+        Vector vertex00 = xVec - yVec - zVec;
+        Vector vertex01 = xVec - yVec + zVec;
+        Vector vertex10 = xVec + yVec - zVec;
+        Vector vertex11 = xVec + yVec + zVec;
+
+        Vector boundMax = Vector(
+            std::max({vertex00.x(), vertex01.x(), vertex10.x(), vertex11.x()}),
+            std::max({vertex00.y(), vertex01.y(), vertex10.y(), vertex11.y()}),
+            std::max({vertex00.z(), vertex01.z(), vertex10.z(), vertex11.z()})
+        );
+
+        Point maxP = origin + boundMax + Vector(this->m_cornerRadius);
+        Point minP = origin - boundMax - Vector(this->m_cornerRadius);
 
         return Bounds(minP, maxP);
     }

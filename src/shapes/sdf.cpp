@@ -20,6 +20,22 @@ class SDF : public Shape {
     /// @brief The Bunds of the SDF object. Will be pre-computed in constructor
     Bounds m_bounds;
 
+    // See @file acces.hpp for comments
+    float intersectBounds(const Ray &ray) const {
+        const auto t1 = (this->m_bounds.min() - ray.origin) / ray.direction;
+        const auto t2 = (this->m_bounds.max() - ray.origin) / ray.direction;
+
+        const auto tNear = elementwiseMin(t1, t2).maxComponent();
+        const auto tFar = elementwiseMax(t1, t2).minComponent();
+
+        if (tFar < tNear)
+            return Infinity;
+        if (tFar < Epsilon)
+            return Infinity;
+
+        return tNear;
+    }
+
 public:
     SDF(const Properties &properties) {
         this->m_maxSteps = properties.get<int>("maxSteps", 50);
@@ -39,6 +55,16 @@ public:
     bool intersect(const Ray &ray, Intersection &its, Sampler &rng) const override {
         float marchDistance = 0.0f;
         int steps;
+
+        float boundsT = intersectBounds(ray);
+
+        // If the ray doesn't hit the bounding box, we know it doesn't hit the SDF
+        if (boundsT == Infinity) {
+            return false;
+        }
+
+        // Set starting t to the Bounds distance
+        marchDistance = boundsT;
 
         for (steps = 0; steps < this->m_maxSteps; steps++) {
             Point currPoint = ray(marchDistance);

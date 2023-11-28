@@ -40,13 +40,32 @@ public:
     }
 
     Bounds getBoundingBox() const override {
-        Point maxP = Point(0.0f, 0.0f, 0.0f) + Vector(this->m_radius, this->m_height, this->m_radius) + Vector(this->m_edgeRadius);
-        Point minP = Point(0.0f, 0.0f, 0.0f) - Vector(this->m_radius, this->m_height, this->m_radius) - Vector(this->m_edgeRadius);
+        Point origin = Point(0.0f);
+        Vector hVec = Vector(0.0f, 1.0f, 0.0f);
+        Vector rVec1 = Vector(1.0f, 0.0f, 0.0f);
+        Vector rVec2 = Vector(0.0f, 0.0f, 1.0f);
+        Vector cRVec = Vector(1.0f, 1.0f, 1.0f) * this->m_edgeRadius;
 
         if (this->m_transform) {
-            maxP = this->m_transform->apply(maxP);
-            minP = this->m_transform->apply(minP);
+            origin = this->m_transform->apply(origin);
+            hVec = this->m_transform->apply(hVec).normalized();
+            rVec1 = this->m_transform->apply(rVec1).normalized();
+            rVec2 = this->m_transform->apply(rVec2).normalized();
         }
+
+        Point edgeP1 = hVec * this->m_height + rVec1 * this->m_radius + rVec2 * this->m_radius;
+        Point edgeP2 = hVec * this->m_height + rVec1 * this->m_radius - rVec2 * this->m_radius;
+        Point edgeP3 = hVec * this->m_height - rVec1 * this->m_radius + rVec2 * this->m_radius;
+        Point edgeP4 = hVec * this->m_height - rVec1 * this->m_radius - rVec2 * this->m_radius;
+
+        Vector cornerV1 = Vector(
+            std::max({edgeP1.x(), edgeP2.x(), edgeP3.x(), edgeP4.x()}),
+            std::max({edgeP1.y(), edgeP2.y(), edgeP3.y(), edgeP4.y()}),
+            std::max({edgeP1.z(), edgeP2.z(), edgeP3.z(), edgeP4.z()})
+        );
+
+        Point maxP = origin + cornerV1 + cRVec;
+        Point minP = origin - cornerV1 - cRVec;
 
         return Bounds(minP, maxP);
     }
