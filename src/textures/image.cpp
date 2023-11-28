@@ -91,11 +91,13 @@ public:
             ));
             break;
         case FilterMode::Bilinear: {
+                Point2 texMidPos = texPos - Vector2(0.5f);
+
                 Point2i cellPos = Point2i(
-                    floor(texPos.x()),
-                    floor(texPos.y())
+                    floor(texMidPos.x()),
+                    floor(texMidPos.y())
                 );
-                Point2 cellOffset = texPos - Point2(cellPos.x(), cellPos.y());
+                Point2 cellOffset = texMidPos - Point2(cellPos.x(), cellPos.y());
 
                 // Get 4 edge colors to interpolate between
                 Color colorTL = GetPixel(cellPos);
@@ -104,11 +106,11 @@ public:
                 Color colorBR = GetPixel(Point2i(cellPos.x() + 1, cellPos.y() + 1));
 
                 // First, we interpolate between left and right
-                Color colorTI = colorTL * cellOffset.x() + colorTR * (1.0f - cellOffset.x());
-                Color colorBI = colorBL * cellOffset.x() + colorBR * (1.0f - cellOffset.x());
+                Color colorTI = colorTR * cellOffset.x() + colorTL * (1.0f - cellOffset.x());
+                Color colorBI = colorBR * cellOffset.x() + colorBL * (1.0f - cellOffset.x());
 
                 // Finally, interpolate between top and bottom color
-                pxColor = colorTI * cellOffset.y() + colorBI * (1.0f - cellOffset.y());
+                pxColor = colorBI * cellOffset.y() + colorTI * (1.0f - cellOffset.y());
             } break;
         }
 
