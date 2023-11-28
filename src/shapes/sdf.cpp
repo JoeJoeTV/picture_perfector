@@ -70,6 +70,13 @@ public:
             this->estimateDistance(hitP + Vector{0.0f, 1.0f, 0.0f} * this->m_normalEpsilon) - this->estimateDistance(hitP - Vector{0.0f, 1.0f, 0.0f} * this->m_normalEpsilon),
             this->estimateDistance(hitP + Vector{0.0f, 0.0f, 1.0f} * this->m_normalEpsilon) - this->estimateDistance(hitP - Vector{0.0f, 0.0f, 1.0f} * this->m_normalEpsilon),
         }.normalized();
+        its.frame.tangent = its.frame.normal.cross(Vector{1.0f, 0.0f, 1.0f}).normalized();
+
+        if ((-Epsilon < its.frame.tangent.length()) and (its.frame.tangent.length() <= Epsilon)) {
+            its.frame.tangent = its.frame.normal.cross(Vector{0.0f, 1.0f, 0.0f}).normalized();
+        }
+
+        its.frame.bitangent = its.frame.normal.cross(its.frame.tangent).normalized();
 
         its.pdf = 0.0f;
 
