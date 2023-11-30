@@ -103,10 +103,20 @@ public:
             this->estimateDistance(hitP + Vector{0.0f, 1.0f, 0.0f} * this->m_normalEpsilon) - this->estimateDistance(hitP - Vector{0.0f, 1.0f, 0.0f} * this->m_normalEpsilon),
             this->estimateDistance(hitP + Vector{0.0f, 0.0f, 1.0f} * this->m_normalEpsilon) - this->estimateDistance(hitP - Vector{0.0f, 0.0f, 1.0f} * this->m_normalEpsilon),
         }.normalized();
-        its.frame.tangent = its.frame.normal.cross(Vector{1.0f, 0.0f, 1.0f}).normalized();
 
-        if ((-Epsilon < its.frame.tangent.length()) and (its.frame.tangent.length() <= Epsilon)) {
-            its.frame.tangent = its.frame.normal.cross(Vector{0.0f, 1.0f, 0.0f}).normalized();
+        its.frame.tangent = its.frame.normal.cross(Vector(1.0f, 0.0f, 0.0f));
+
+        // If both vectors are parallel (length of tangent is 0), use different coordinate
+        if ((-Epsilon < its.frame.tangent.lengthSquared()) and (its.frame.tangent.lengthSquared() < Epsilon)) {
+            its.frame.tangent = its.frame.normal.cross(Vector(1.0f, 1.0f, 0.0f));
+        }
+
+        // Tangent is not yet normalized, so do that
+        its.frame.tangent = its.frame.tangent.normalized();
+
+        if (std::isnan(its.frame.tangent.x()) or std::isnan(its.frame.tangent.y()) or std::isnan(its.frame.tangent.z())) {
+            logger(EWarn, "Encountered NaN value in tangent vector: %s", its.frame.tangent);
+            logger(EWarn, "Normal vector: %s", its.frame.normal);
         }
 
         its.frame.bitangent = its.frame.normal.cross(its.frame.tangent).normalized();
