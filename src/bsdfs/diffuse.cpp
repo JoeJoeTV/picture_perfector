@@ -23,7 +23,8 @@ public:
         // finaly, account for foreshortening with cos(wi) = wi.dot(normal) / (len(wi) * len(normal))
         float foreshortening = wi.dot(Vector(0,0,1));
         //Color weight = ((m_albedo->evaluate(uv)/Pi) * foreshortening / uniformHemispherePdf());
-        Color weight = ((m_albedo->evaluate(uv)/Pi) * foreshortening * Pi / (cosineHemispherePdf(wi)+Epsilon));
+        // add a small value in order to avoid division by zero
+        Color weight = ((m_albedo->evaluate(uv)/Pi) * foreshortening / (cosineHemispherePdf(wi)+1e-8f));
 
         return BsdfSample{
             .wi = wi,

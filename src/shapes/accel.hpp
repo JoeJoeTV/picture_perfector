@@ -182,8 +182,127 @@ class AccelerationStructure : public Shape {
                     size.y() * size.z());
     }
 
+    struct Bin {
+        Bounds aabb;
+        int primitiveCount = 0;
+    };
+
+    // How many Bins to use
+    #define BINS 32
+
+    /// @brief  Finds the best split plane position in specified @param splitAxis
+    ///         and updates @param splitPos accordingly, while returning
+    ///         the best cost according to the SAH metric
+    /// @param node The node for which to calculate the best split plane
+    /// @param splitAxis The axis on which the best split plane position should be found
+    /// @param splitPos The split position, which will be updated
+    /// @return The cost of the best split plane
+    /// @note Based upon https://jacco.ompf2.com/2022/04/21/how-to-build-a-bvh-part-3-quick-builds/
+    float FindBestSplitPlane(Node &node, int splitAxis, float &splitPos) {
+        // The current best cost achoived using splitAxis and splitPos
+        float bestCost = Infinity;
+
+        // Bounds containing the primitives in @var node on the split axis
+        float boundAxisMin = Infinity;
+        float boundAxisMax = -Infinity;
+
+        for (int i = 0; i < node.primitiveCount; i++) {
+            float primitiveAxisPos = getCentroid(this->m_primitiveIndices[node.leftFirst + i])[splitAxis];
+
+            boundAxisMin = min(boundAxisMin, primitiveAxisPos);
+            boundAxisMax = max(boundAxisMax, primitiveAxisPos);
+        }
+
+        if (boundAxisMin == boundAxisMax) {
+            return Infinity;
+        }
+
+
+        /// Populate the bins
+
+        Bin bin[BINS];
+
+        // Scale of each bin in relation to bounds
+        float scale = BINS / (boundAxisMax - boundAxisMin);
+
+        for (int i = 0; i < node.primitiveCount; i++) {
+            int primitiveIdx = this->m_primitiveIndices[node.leftFirst + i];
+            float primitiveAxisPos = getCentroid(primitiveIdx)[splitAxis];
+            Bounds primitiveBounds = getBoundingBox(primitiveIdx);
+
+            int binIdx = min(BINS -1, static_cast<int>((primitiveAxisPos - boundAxisMin) * scale));
+
+            bin[binIdx].primitiveCount++;
+            bin[binIdx].aabb.extend(primitiveBounds);
+        }
+
+        /// Get data required for caolculating cost of all the planes dividing the bins
+        // Data arrays
+        float leftArea[BINS - 1];
+        float rightArea[BINS - 1];
+        int leftCount[BINS - 1];
+        int rightCount[BINS - 1];
+
+        // Bounding boxes for 2 sub-nodes
+        Bounds leftBox;
+        Bounds rightBox;
+
+        // Cumultative primitive counts
+        int leftSum = 0;
+        int rightSum = 0;
+
+        for (int i = 0; i < BINS - 1; i++) {
+            // For left values, from left to right
+            leftSum += bin[i].primitiveCount;
+            leftCount[i] = leftSum;
+            leftBox.extend(bin[i].aabb);
+            leftArea[i] = surfaceArea(leftBox);
+
+            // For right values, from right to left
+            rightSum += bin[BINS - 2 - i].primitiveCount;
+            rightCount[BINS - 2 - i] = rightSum;
+            rightBox.extend(bin[BINS - 2 - i].aabb);
+            rightArea[BINS - 2 - i] = surfaceArea(rightBox);
+        }
+
+        /// Calculate cost for all planes
+        scale = (boundAxisMax - boundAxisMin) / BINS;
+
+        for (int i = 0; i < BINS - 1; i++) {
+            float planeCost = leftCount[i] * leftArea[i] + rightCount[i] * rightArea[i];
+
+            if (planeCost < bestCost) {
+                splitPos = boundAxisMin + scale * (i + 1);
+                bestCost = planeCost;
+            }
+        }
+
+        return bestCost;
+    }
+
+    /// @note Based upon https://jacco.ompf2.com/2022/04/21/how-to-build-a-bvh-part-3-quick-builds/
     NodeIndex binning(Node &node, int splitAxis) {
-        NOT_IMPLEMENTED
+        // The position on the axis where the split should happen
+        float splitPos;
+
+        // The cost of splitting at @var splitPos
+        FindBestSplitPlane(node, splitAxis, splitPos);
+        // partition algorithm (you might remember this from quicksort)
+        NodeIndex firstRightIndex   = node.firstPrimitiveIndex();
+        NodeIndex lastLeftIndex     = node.lastPrimitiveIndex();
+
+        while (firstRightIndex <= lastLeftIndex) {
+            if (getCentroid(
+                    m_primitiveIndices[firstRightIndex])[splitAxis] <
+                splitPos) {
+                firstRightIndex++;
+            } else {
+                std::swap(m_primitiveIndices[firstRightIndex],
+                            m_primitiveIndices[lastLeftIndex--]);
+            }
+        }
+        
+        return firstRightIndex;
     }
 
     /// @brief Attempts to subdivide a given BVH node.
@@ -198,7 +317,7 @@ class AccelerationStructure : public Shape {
         const NodeIndex firstPrimitive = parent.firstPrimitiveIndex();
 
         // set to true when implementing binning
-        static constexpr bool UseSAH = false;
+        static constexpr bool UseSAH = true;
 
         // the point at which to split (note that primitives must be re-ordered
         // so that all children of the left node will have a smaller index than
