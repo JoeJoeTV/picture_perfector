@@ -23,6 +23,8 @@ void Instance::transformFrame(SurfaceEvent &surf) const {
     }
 
     surf.frame.normal = surf.frame.tangent.cross(surf.frame.bitangent).normalized();
+
+    surf.frame.bitangent = surf.frame.normal.cross(surf.frame.tangent).normalized();
 }
 
 bool Instance::intersect(const Ray &worldRay, Intersection &its, Sampler &rng) const {
