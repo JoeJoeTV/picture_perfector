@@ -63,9 +63,6 @@ public:
             return false;
         }
 
-        // Set starting t to the Bounds distance
-        marchDistance = boundsT;
-
         for (steps = 0; steps < this->m_maxSteps; steps++) {
             Point currPoint = ray(marchDistance);
 
@@ -78,13 +75,19 @@ public:
                 return false;
             }
 
+            // If hitpoint would be behind the bounding box, we don't need to check further
+            // as the bounding box includes the object to render and thus the distance will only increase
+            if ((marchDistance > boundsT) and (!this->m_bounds.includes(ray(marchDistance)))) {
+                return false;
+            }
+
             // If the distance is smaller than the threshold, we can count this as a hit on the object and return the intersection
             if (distance < this->m_minDistance) {
                 break;
             }
         }
 
-        if (steps >= this->m_maxSteps) {
+        if ((steps >= this->m_maxSteps) or (marchDistance <= this->m_minDistance)) {
             return false;
         }
 
@@ -93,7 +96,7 @@ public:
         Point hitP = ray(marchDistance);
 
         // Since we don't have texture coordinates, store amount of steps used in UV
-        its.uv[0] = static_cast<float>(steps) / this->m_maxSteps;
+        its.uv[0] = 0; //static_cast<float>(steps) / this->m_maxSteps;
         its.uv[1] = 0;
 
         its.position = hitP;
@@ -113,11 +116,6 @@ public:
 
         // Tangent is not yet normalized, so do that
         its.frame.tangent = its.frame.tangent.normalized();
-
-        if (std::isnan(its.frame.tangent.x()) or std::isnan(its.frame.tangent.y()) or std::isnan(its.frame.tangent.z())) {
-            logger(EWarn, "Encountered NaN value in tangent vector: %s", its.frame.tangent);
-            logger(EWarn, "Normal vector: %s", its.frame.normal);
-        }
 
         its.frame.bitangent = its.frame.normal.cross(its.frame.tangent).normalized();
 
