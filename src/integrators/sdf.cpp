@@ -23,7 +23,7 @@ public:
         if (!its) {
             return Color(0.0f);
         } else {
-            return Color(its.uv[0]);
+            return Color(its.stats.sdfStepFraction);
         }
     }
 

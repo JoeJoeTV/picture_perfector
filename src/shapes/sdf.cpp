@@ -95,8 +95,9 @@ public:
 
         Point hitP = ray(marchDistance);
 
-        // Since we don't have texture coordinates, store amount of steps used in UV
-        its.uv[0] = 0; //static_cast<float>(steps) / this->m_maxSteps;
+        its.stats.sdfStepFraction = static_cast<float>(steps) / this->m_maxSteps;
+
+        its.uv[0] = 0;
         its.uv[1] = 0;
 
         its.position = hitP;

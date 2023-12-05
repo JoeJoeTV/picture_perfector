@@ -746,12 +746,14 @@ struct Intersection : public SurfaceEvent {
     /// @brief The intersection distance, which can also be used to specify a maximum distance when querying intersections.
     float t;
 
-    /// @brief Statistics recorded while traversing acceleration structures.
+    /// @brief Statistics recorded while traversing acceleration structures and SDFs.
     struct {
         /// @brief The number of BVH nodes that have been tested for intersection.
         int bvhCounter = 0;
         /// @brief The number of shapes that have been tested for intersection.
         int primCounter = 0;
+        /// @brief The fraction of steps that have been marched in relation to the max steps specified for the SDF shape
+        float sdfStepFraction = 0.0f;
     } stats;
 
     Intersection(const Vector &wo = Vector(), float t = Infinity)
