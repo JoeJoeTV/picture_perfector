@@ -10,6 +10,11 @@ public:
         m_albedo = properties.get<Texture>("albedo");
     }
 
+    BsdfEval evaluate(const Point2 &uv, const Vector &wo,
+                      const Vector &wi) const override {
+        NOT_IMPLEMENTED
+    }
+
     BsdfSample sample(const Point2 &uv, const Vector &wo,
                       Sampler &rng) const override {
         // sample an outgoing ray wi where normal is in z direction 
