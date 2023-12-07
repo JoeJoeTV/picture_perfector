@@ -198,7 +198,7 @@ class AccelerationStructure : public Shape {
     /// @param splitPos The split position, which will be updated
     /// @return The cost of the best split plane
     /// @note Based upon https://jacco.ompf2.com/2022/04/21/how-to-build-a-bvh-part-3-quick-builds/
-    float FindBestSplitPlane(Node &node, int splitAxis, float &splitPos) {
+    float findBestSplitPlane(Node &node, int splitAxis, float &splitPos) {
         // The current best cost achoived using splitAxis and splitPos
         float bestCost = Infinity;
 
@@ -285,8 +285,10 @@ class AccelerationStructure : public Shape {
         // The position on the axis where the split should happen
         float splitPos;
 
-        // The cost of splitting at @var splitPos
-        FindBestSplitPlane(node, splitAxis, splitPos);
+        /// Calculate the best @var splitPos on the given @var splitAxis
+        /// @note The return value is discarded, because only one splitAxis is looked at
+        findBestSplitPlane(node, splitAxis, splitPos);
+
         // partition algorithm (you might remember this from quicksort)
         NodeIndex firstRightIndex   = node.firstPrimitiveIndex();
         NodeIndex lastLeftIndex     = node.lastPrimitiveIndex();
