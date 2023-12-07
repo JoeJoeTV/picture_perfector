@@ -2,9 +2,6 @@
 
 namespace lightwave {
 class SDFIntegrator : public SamplingIntegrator {
-    /// @brief Whether to remap the normal from [-1,1] to [0,1] 
-    bool m_remap;
-
 public:
     SDFIntegrator(const Properties &properties)
     : SamplingIntegrator(properties) {
