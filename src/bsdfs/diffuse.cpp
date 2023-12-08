@@ -12,7 +12,15 @@ public:
 
     BsdfEval evaluate(const Point2 &uv, const Vector &wo,
                       const Vector &wi) const override {
-        NOT_IMPLEMENTED
+
+        
+        const float foreshortening = Frame::cosTheta(wi);
+
+        const Color weight = (this->m_albedo->evaluate(uv) / Pi) * foreshortening;
+
+        return BsdfEval{
+            .value = weight
+        };
     }
 
     BsdfSample sample(const Point2 &uv, const Vector &wo,

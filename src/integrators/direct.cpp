@@ -2,8 +2,35 @@
 
 namespace lightwave {
 class DirectIntegretor : public SamplingIntegrator {
-    /// @brief Whether to remap the normal from [-1,1] to [0,1] 
-    // bool m_remap;
+    
+    Color calculateLight(Intersection &its, Sampler &rng) {
+        if (not this->m_scene->hasLights()) {
+            return Color(0.0f);
+        }
+
+        // Sample random light source in the scene and sample point on selected light source
+        const LightSample ls = this->m_scene->sampleLight(rng);
+
+        // If light can be intersected, don't count it (since it will be hit by the ray already)
+        if (ls.light->canBeIntersected()) {
+            return Color(0.0f);
+        }
+
+        const DirectLightSample dls = ls.light->sampleDirect(its.position, rng);
+
+        // Check if light source is blocked for intersection
+        const Intersection its_shadow = this->m_scene->intersect(Ray(its.position, dls.wi), rng);
+
+        if (its_shadow and (its_shadow.t < dls.distance)) {
+            return Color(0.0f);
+        }
+
+        const BsdfEval bsdf_sample = its.evaluateBsdf(dls.wi);
+
+        Color contribution = (dls.weight * bsdf_sample.value) * ls.probability;
+
+        return contribution;
+    }
 
 public:
     DirectIntegretor(const Properties &properties)
@@ -28,6 +55,8 @@ public:
 
         // sample the bsdf of the hit instance
         BsdfSample sample = its.sampleBsdf(rng);
+
+        const Color lightContribution = calculateLight(its, rng);
         
         // update weight of sample to account for emission if there are emissions
         Color emissions = its.evaluateEmission();
@@ -44,7 +73,7 @@ public:
             sample.weight *= its2.evaluateEmission();
         }
 
-        return Color(sample.weight) + emissions;
+        return Color(sample.weight) + emissions + lightContribution;
     }
 
     /// @brief An optional textual representation of this class, which can be useful for debugging. 
