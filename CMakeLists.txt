@@ -57,6 +57,10 @@ include_directories(deps/stb)
 include_directories(deps/tinyformat)
 find_package(Threads REQUIRED)
 
+# Additional libraries
+include_directories(deps/Eigen)
+include_directories(deps/autodiff)
+
 function(add_extra_options TARGET)
     add_warnings(${TARGET}) # Defined in cmake/SetupWarnings.cmake
     add_fastmath(${TARGET}) # Defined in cmake/SetupFlags.cmake
