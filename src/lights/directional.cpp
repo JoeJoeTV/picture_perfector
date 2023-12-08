@@ -16,11 +16,11 @@ public:
 
     DirectLightSample sampleDirect(const Point &origin,
                                    Sampler &rng) const override {
-        const Vector wi = -this->m_direction;
+        const Vector wi = this->m_direction;
 
         return DirectLightSample{
             .wi = wi,
-            .weight = m_intensity * Frame::cosTheta(wi),
+            .weight = this->m_intensity,
             .distance = Infinity
         };
 
