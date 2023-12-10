@@ -27,7 +27,7 @@ class DirectIntegretor : public SamplingIntegrator {
 
         const BsdfEval bsdf_sample = its.evaluateBsdf(dls.wi);
 
-        Color contribution = (dls.weight * ls.probability) + bsdf_sample.value;
+        Color contribution = (dls.weight * bsdf_sample.value) / ls.probability;
 
         return contribution;
     }
