@@ -70,7 +70,7 @@ public:
         const Point focalPlaneHit = origRay(t);
 
         // Get random point for lens in [-1; 1]^2
-        const Vector2 lensCoord = ((Vector2(rng.next2D()) * 2) - Vector2(1.0f, 1.0f)) * this->apertureRadius;
+        const Vector2 lensCoord = ((Vector2(squareToUniformDiskConcentric(rng.next2D())) * 2) - Vector2(1.0f, 1.0f)) * this->apertureRadius;
         const Point lensOrigin = Point(lensCoord.x(), lensCoord.y(), 0.0f);
 
         const Ray sampleRay = Ray(lensOrigin, (focalPlaneHit - lensOrigin));

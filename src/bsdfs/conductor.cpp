@@ -20,7 +20,14 @@ public:
 
     BsdfSample sample(const Point2 &uv, const Vector &wo,
                       Sampler &rng) const override {
-        NOT_IMPLEMENTED
+        Vector wi = reflect(wo, Vector(0.0f, 0.0f, 1.0f));
+
+        Color weight = this->m_reflectance->evaluate(uv);
+
+        return BsdfSample{
+            .wi = wi,
+            .weight = weight
+        };
     }
 
     std::string toString() const override {

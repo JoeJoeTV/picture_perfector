@@ -6,8 +6,8 @@
     <float name="fov" value="39.6"/>
     <string name="fovAxis" value="x"/>
 
-    <float name="apertureRadius" value="0.2"/>
-    <float name="focalDistance" value="13"/>
+    <float name="apertureRadius" value="0.05"/>
+    <float name="focalDistance" value="12.5"/>
     <transform>
       <matrix value="1,0,0,0,  0,-0.0872,0.996,-8,  0,-0.996,-0.0872,1.5,  0,0,0,1"/>
     </transform>
@@ -27,7 +27,7 @@
     <bsdf type="diffuse">
         <texture name="albedo" type="constant" value="0.1, 0.25, 0.1"/>
     </bsdf>
-    <shape type="mesh" filename="meshes/bunny.001.ply"/>
+    <shape type="mesh" filename="meshes/bunny.ply"/>
     <transform>
       <matrix value="1.5,0,0,0.5,  0,1.5,0,5,  0,0,1.5,0,  0,0,0,1"/>
     </transform>
@@ -37,7 +37,7 @@
     <bsdf type="diffuse">
         <texture name="albedo" type="constant" value="0.1, 0.1, 0.25"/>
     </bsdf>
-    <shape type="mesh" filename="meshes/bunny.002.ply"/>
+    <shape type="mesh" filename="meshes/bunny.ply"/>
     <transform>
       <matrix value="2,0,0,4,  0,2,0,12.1,  0,0,2,0,  0,0,0,1"/>
     </transform>
@@ -61,5 +61,5 @@
 <integrator type="direct">
   <ref id="scene"/>
   <image id="r_g_bunnies"/>
-  <sampler type="independent" count="256"/>
+  <sampler type="independent" count="1024"/>
 </integrator>

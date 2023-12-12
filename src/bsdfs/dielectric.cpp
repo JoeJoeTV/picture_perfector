@@ -25,7 +25,47 @@ public:
 
     BsdfSample sample(const Point2 &uv, const Vector &wo,
                       Sampler &rng) const override {
-        NOT_IMPLEMENTED
+
+        // ior is given as etaI / etaE , where etaI is the refraction index of the material
+        // and etaE is the refraction index of the outside (normally air)
+        const float ior = this->m_ior->scalar(uv);
+
+        // The direction vectors of the reflection and refraction
+        // based upon if we're entering the metarial or exiting it
+        Vector vecReflected;
+        Vector vecRefracted;
+
+        // The relative reflection index based upon if we're entering or exiting the material
+        float eta;
+
+        const float cosThetaI = Frame::cosTheta(wo);
+
+        if (cosThetaI >= 0) {
+            // Transition: outside -> material
+            eta = ior;
+            vecReflected = reflect(wo, Vector(0.0f, 0.0f, 1.0f));
+            vecRefracted = refract(wo, Vector(0.0f, 0.0f, 1.0f), eta);
+        } else {
+            // Transition: material -> outside
+            eta = 1/ior;
+            vecReflected = reflect(wo, Vector(0.0f, 0.0f, -1.0f));
+            vecRefracted = refract(wo, Vector(0.0f, 0.0f, -1.0f), eta);
+        }
+
+        // Calculate the fresnel term and use it as a probability to choose reflection or refraction
+        const float fresnel = fresnelDielectric(cosThetaI, eta);
+
+        if (rng.next() < fresnel) {
+            return BsdfSample{
+                .wi = vecReflected,
+                .weight = this->m_reflectance->evaluate(uv)
+            };
+        } else {
+            return BsdfSample{
+                .wi = vecRefracted,
+                .weight = this->m_transmittance->evaluate(uv) / sqr(eta)
+            };
+        }
     }
 
     std::string toString() const override {

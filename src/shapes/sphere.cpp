@@ -45,26 +45,31 @@ public:
         const float t1 = (-b + sqrt(d)) / 2;
         const float t2 = (-b - sqrt(d)) / 2;
 
+
         // Determine which hit to choose if any
         float tClose;
 
-        if (t1 < 0) {
-            if (t2 < 0) {
+        if (t1 < Epsilon) {
+            if (t2 < Epsilon) {
                 return false;
             } else {
                 tClose = t2;
             }
         } else {
-            if (t2 < 0) {
+            if (t2 < Epsilon) {
                 tClose = t1;
             } else {
                 tClose = min(t1, t2);
             }
         }
 
+        // If hit is to close to the origin, discard it
+        if ((-Epsilon < tClose) and (tClose < Epsilon)) {
+            return false;
+        }
 
-        // If hit is too small or close hit already exists, don't update
-        if (tClose < Epsilon || tClose > its.t) {
+        // If hit is farther away than previous hit, discard it
+        if (tClose > its.t) {
             return false;
         }
 
