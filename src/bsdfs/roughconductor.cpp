@@ -30,9 +30,10 @@ public:
                         * microfacet::smithG1(alpha, n, wi)
                         * microfacet::smithG1(alpha, n, wo);
         const float b = 4 * Frame::cosTheta(wi) * Frame::cosTheta(wo);
+        const Color weight = (a / b);
         
         return BsdfEval{
-            .value = a / b
+            .value = weight
         };
 
         // hints:
@@ -49,8 +50,9 @@ public:
         // Reflect wo at sampled normal vector to get wi
         const Vector wi = reflect(wo, n);
 
-        const Color a = this->m_reflectance->evaluate(uv) * microfacet::smithG1(alpha, n, wi);
-        const Color weight = a / Frame::cosTheta(wi);
+        // Calculate weight using BSDF function, PDF of sampling function and 
+        // TODO: Add more notes about what cancels out + Find out why cos(theta:i) cancels out
+        const Color weight = this->m_reflectance->evaluate(uv) * microfacet::smithG1(alpha, n, wi);
 
         return BsdfSample{
             .wi = wi,
