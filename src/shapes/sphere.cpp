@@ -63,9 +63,13 @@ public:
             }
         }
 
+        // If hit is to close to the origin, discard it
+        if ((-Epsilon < tClose) and (tClose < Epsilon)) {
+            return false;
+        }
 
-        // If hit is too small or close hit already exists, don't update
-        if (tClose < Epsilon || tClose > its.t) {
+        // If hit is farther away than previous hit, discard it
+        if (tClose > its.t) {
             return false;
         }
 
