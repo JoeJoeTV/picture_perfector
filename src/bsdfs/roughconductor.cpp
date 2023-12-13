@@ -28,7 +28,8 @@ public:
                             microfacet::smithG1(alpha, halfvector, wo) *
                             microfacet::smithG1(alpha, halfvector, wi);
           
-        float denominator = 4*Frame::cosTheta(wi)*Frame::cosTheta(wo);
+        // the forshortening cosTheta(wi) cancels in denominator
+        float denominator = 4*Frame::cosTheta(wo);
         
         return BsdfEval{
             .value = numerator/denominator,

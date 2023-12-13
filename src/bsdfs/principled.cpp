@@ -46,11 +46,11 @@ struct MetallicLobe {
                             microfacet::evaluateGGX(this->alpha, halfvector) * 
                             microfacet::smithG1(this->alpha, halfvector, wo) *
                             microfacet::smithG1(this->alpha, halfvector, wi);
-          
-        float denominator = 4*Frame::cosTheta(wi)*Frame::cosTheta(wo);
+        // the forshortening cosTheta(wi) cancels in denominator
+        float denominator = 4*Frame::cosTheta(wo);
         
         return BsdfEval{
-            .value = numerator/denominator,
+            .value = (numerator/denominator)
         };
         // hints:
         // * copy your roughconductor bsdf evaluate here
