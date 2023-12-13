@@ -34,9 +34,6 @@ class Pathtracer : public SamplingIntegrator {
 
         const BsdfEval bsdf_sample = its.evaluateBsdf(dls.wi);
 
-        assert(dls.weight[0] >= 0);
-        assert(bsdf_sample.value[0] >= 0);
-
         Color contribution = (dls.weight * bsdf_sample.value) / ls.probability;
 
         return contribution;
