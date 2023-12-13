@@ -25,6 +25,11 @@ class DirectIntegretor : public SamplingIntegrator {
             return Color(0.0f);
         }
 
+        // check that the lightsouce is not behind the object
+        if (dls.wi.dot(its.frame.normal) < 0) {
+            return Color(0.f);
+        }
+
         const BsdfEval bsdf_sample = its.evaluateBsdf(dls.wi);
 
         Color contribution = (dls.weight * bsdf_sample.value) / ls.probability;
