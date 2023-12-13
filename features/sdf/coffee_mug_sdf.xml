@@ -1,3 +1,41 @@
+<!-- SDF Objects -->
+<sdf id="baseInner" type="thicken" amount="0.1">
+    <sdf type="transform">
+        <sdf type="cylinder" height="2" radius="1.5"/>
+        <transform>
+            <rotate axis="1,0,0" angle="90" />
+            <translate x="0" z="1" y="0" />
+        </transform>
+    </sdf>
+</sdf>
+
+<sdf id="baseOuter" type="thicken" amount="0.1">
+    <sdf type="transform">
+        <sdf type="cylinder" height="2" radius="2"/>
+        <transform>
+            <rotate axis="1,0,0" angle="90" />
+        </transform>
+    </sdf>
+</sdf>
+
+<sdf id="handle" type="combine" mode="sub" smooth="true" k="0.25">
+    <sdf type="transform">
+        <sdf type="cylinder" height="1" radius="0.85"/>
+        <transform>
+            <translate x="2.7" z="0.4" y="0" />
+        </transform>
+    </sdf>
+    <sdf type="thicken" amount="0.11">
+        <sdf type="transform">
+            <sdf type="cylinder" height="0.25" radius="1.35"/>
+            <transform>
+                <translate x="2.7" z="0.4" y="0" />
+            </transform>
+        </sdf>
+    </sdf>
+</sdf>
+
+<!-- Main Scene -->
 <scene id="scene">
     <camera type="perspective">
         <integer name="width" value="1024" />
@@ -21,32 +59,14 @@
         <transform>
             <translate x="-1.25" y="0" z="0" />
         </transform>
+
         <shape type="sdf" maxSteps="300" minDistance="0.001">
+            <!-- Combine -->
             <sdf type="combine" mode="sub" smooth="true" k="0.25">
-                <sdf type="cylinder" height="2" radius="1.5" edgeRadius="0.1">
-                    <transform>
-                        <rotate axis="1,0,0" angle="90" />
-                        <translate x="0" z="1" y="0" />
-                    </transform>
-                </sdf>
+                <ref id="baseInner"/>
                 <sdf type="combine" mode="union" smooth="true" k="0.25">
-                    <sdf type="cylinder" height="2" radius="2" edgeRadius="0.1">
-                        <transform>
-                            <rotate axis="1,0,0" angle="90" />
-                        </transform>
-                    </sdf>
-                    <sdf type="combine" mode="sub" smooth="true" k="0.25">
-                        <sdf type="cylinder" height="1" radius="0.85">
-                            <transform>
-                                <translate x="2.7" z="0.4" y="0" />
-                            </transform>
-                        </sdf>
-                        <sdf type="cylinder" height="0.25" radius="1.35" edgeRadius="0.11">
-                            <transform>
-                                <translate x="2.7" z="0.4" y="0" />
-                            </transform>
-                        </sdf>
-                    </sdf>
+                    <ref id="baseOuter"/>
+                    <ref id="handle"/>
                 </sdf>
             </sdf>
         </shape>

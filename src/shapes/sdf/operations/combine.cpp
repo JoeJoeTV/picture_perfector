@@ -1,5 +1,5 @@
 #include <lightwave.hpp>
-#include "sdfshape.hpp"
+#include "../sdfobject.hpp"
 
 namespace lightwave {
 
@@ -13,10 +13,10 @@ float smoothUnion(const float d1, const float d2, const float k) {
     return min(d1, d2) - h*h*0.25/k;
 }
 
-class SDFCombine : public SDFShape {
+class SDFCombine : public SDFObject {
     /// @brief SDF Shapes combines using this min pseudo shape
-    ref<SDFShape> m_leftSDF;
-    ref<SDFShape> m_rightSDF;
+    ref<SDFObject> m_firstChild;
+    ref<SDFObject> m_secondChild;
 
     /// @brief Describes how the two SDFs should be combined
     CombineMode m_combineMode;
@@ -25,14 +25,14 @@ class SDFCombine : public SDFShape {
     bool m_smooth;
 
     /// @brief The size of the smoothing
-    float m_smooth_size;
+    float m_smoothSize;
 public:
     SDFCombine(const Properties &properties) {
-        const std::vector<ref<SDFShape>> sdf_children = properties.getChildren<SDFShape>();
+        const std::vector<ref<SDFObject>> sdf_children = properties.getChildren<SDFObject>();
 
         if (sdf_children.size() == 2) {
-            this->m_leftSDF = sdf_children[0];
-            this->m_rightSDF = sdf_children[1];
+            this->m_firstChild = sdf_children[0];
+            this->m_secondChild = sdf_children[1];
         } else {
             lightwave_throw("Exactly 2 SDFs required for 'combine', %d given!", sdf_children.size());
         }
@@ -46,21 +46,21 @@ public:
             );
         
         this->m_smooth = properties.get<bool>("smooth", false);
-        this->m_smooth_size = properties.get<float>("k", 1.0f);
+        this->m_smoothSize = properties.get<float>("k", 1.0f);
     }
 
     float estimateDistance(const Point p) const override {
-        const float EDLeft = this->m_leftSDF->estimateDistance(p);
-        const float EDRight = this->m_rightSDF->estimateDistance(p);
+        const float EDLeft = this->m_firstChild->estimateDistance(p);
+        const float EDRight = this->m_secondChild->estimateDistance(p);
         
         if (this->m_smooth) {
             switch (this->m_combineMode) {
             case CombineMode::UNION:
-                return smoothUnion(EDLeft, EDRight, this->m_smooth_size);
+                return smoothUnion(EDLeft, EDRight, this->m_smoothSize);
             case CombineMode::SUB:
-                return -smoothUnion(EDLeft, -EDRight, this->m_smooth_size);
+                return -smoothUnion(EDLeft, -EDRight, this->m_smoothSize);
             case CombineMode::INTERSECT:
-                return -smoothUnion(-EDLeft, -EDRight, this->m_smooth_size);
+                return -smoothUnion(-EDLeft, -EDRight, this->m_smoothSize);
             default:
                 return 0;
             }
@@ -81,8 +81,8 @@ public:
     Bounds getBoundingBox() const override {
         Bounds bounds = Bounds();
 
-        bounds.extend(this->m_leftSDF->getBoundingBox());
-        bounds.extend(this->m_rightSDF->getBoundingBox());
+        bounds.extend(this->m_firstChild->getBoundingBox());
+        bounds.extend(this->m_secondChild->getBoundingBox());
 
         return bounds;
     }
@@ -94,8 +94,8 @@ public:
             "  right = %s,\n"
             "  mode = %s,\n"
             "]",
-            indent(this->m_leftSDF->toString()),
-            indent(this->m_rightSDF->toString()),
+            indent(this->m_firstChild->toString()),
+            indent(this->m_secondChild->toString()),
             indent(this->m_combineMode)
         );
     }

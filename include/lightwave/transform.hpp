@@ -181,6 +181,43 @@ public:
             indent(m_inverse)
         );
     }
+
+    /*
+     *  Added functionality
+     */
+
+    /// @brief Removes the scaling factor from the transformation and returns it as a vector
+    /// @return The scaling factors in each direction
+    Vector popScale() {
+        // Get first three columns of 3x3 submatrix of transform matrix
+        const Vector c_x = m_transform.submatrix<3, 1>(0, 0).column(0);
+        const Vector c_y = m_transform.submatrix<3, 1>(0, 1).column(0);
+        const Vector c_z = m_transform.submatrix<3, 1>(0, 2).column(0);
+
+        // Extract scale vector
+        const Vector scale = Vector(
+            c_x.length(),
+            c_y.length(),
+            c_z.length()
+        );
+
+        // Set first three columns of 3x3 submatrix to normalized versions to remove scaling
+        m_transform.setColumn(0, Vector4(c_x.normalized(), m_transform(3, 0)));
+        m_transform.setColumn(1, Vector4(c_y.normalized(), m_transform(3, 1)));
+        m_transform.setColumn(2, Vector4(c_z.normalized(), m_transform(3, 2)));
+
+        // Get first three columns of 3x3 submatrix of inverse matrix
+        const Vector ci_x = m_inverse.submatrix<3, 1>(0, 0).column(0);
+        const Vector ci_y = m_inverse.submatrix<3, 1>(0, 1).column(0);
+        const Vector ci_z = m_inverse.submatrix<3, 1>(0, 2).column(0);
+
+        // Set first three columns of 3x3 submatrix of inverse to normalized versions to remove scaling
+        m_inverse.setColumn(0, Vector4(ci_x.normalized(), m_inverse(3, 0)));
+        m_inverse.setColumn(1, Vector4(ci_y.normalized(), m_inverse(3, 1)));
+        m_inverse.setColumn(2, Vector4(ci_z.normalized(), m_inverse(3, 2)));
+
+        return scale;
+    }
 };
 
 }

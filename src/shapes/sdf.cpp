@@ -1,10 +1,10 @@
 #include <lightwave.hpp>
-#include "sdf/sdfshape.hpp"
+#include "sdf/sdfobject.hpp"
 
 namespace lightwave {
 
 /// @brief A Sphere with radius 1 centered at (0,0,0)
-class SDF : public Shape {
+class SDFShape : public Shape {
     /// @brief Maximum amount of ray-marching steps to take before counting as no intersection
     int m_maxSteps;
 
@@ -15,7 +15,7 @@ class SDF : public Shape {
     float m_normalEpsilon;
 
     /// @brief The actual sdf to use for distance estimation
-    ref<SDFShape> m_sdfChild;
+    ref<SDFObject> m_sdfChild;
 
     /// @brief The Bunds of the SDF object. Will be pre-computed in constructor
     Bounds m_bounds;
@@ -37,12 +37,12 @@ class SDF : public Shape {
     }
 
 public:
-    SDF(const Properties &properties) {
+    SDFShape(const Properties &properties) {
         this->m_maxSteps = properties.get<int>("maxSteps", 50);
         this->m_minDistance = properties.get<float>("minDistance", 0.01f);
         this->m_normalEpsilon = this->m_minDistance;
 
-        this->m_sdfChild = properties.getChild<SDFShape>();
+        this->m_sdfChild = properties.getChild<SDFObject>();
 
         // Pre-compute bounding box
         this->m_bounds = this->m_sdfChild->getBoundingBox();
@@ -78,7 +78,7 @@ public:
             // If hitpoint would be behind the bounding box, we don't need to check further
             // as the bounding box includes the object to render and thus the distance will only increase
             if ((marchDistance > boundsT) and (!this->m_bounds.includes(ray(marchDistance)))) {
-                return false;
+                //return false;
             }
 
             // If the distance is smaller than the threshold, we can count this as a hit on the object and return the intersection
@@ -139,7 +139,7 @@ public:
     
     std::string toString() const override {
         return tfm::format(
-            "SDF[\n"
+            "SDFShape[\n"
             "  maxSteps = %d,\n"
             "  minDistance = %f,\n"
             "  childSDF = %s,\n"
@@ -153,4 +153,4 @@ public:
 
 }
 
-REGISTER_SHAPE(SDF, "sdf")
+REGISTER_SHAPE(SDFShape, "sdf")
