@@ -63,17 +63,16 @@ public:
             }
         }
 
-        // If hit is to close to the origin, discard it
-        if ((-Epsilon < tClose) and (tClose < Epsilon)) {
+
+        // If hit is farther away than previous hit or behind the camera,
+        // discard it, as it won't be seen
+        if ((tClose > its.t) or (tClose < 0)) {
             return false;
         }
 
-        // If hit is farther away than previous hit, discard it
-        if (tClose > its.t) {
-            return false;
-        }
-
-        const Point hitPoint = ray(tClose);
+        // Calculate hit point on sphere and normalize to make sure, point is exactly on the sphere
+        const Vector hitPos = Vector(ray(tClose));
+        const Point hitPoint = Point(hitPos.normalized());
 
         // We have found a successful hit, so update in intersection object
         its.t = tClose;
