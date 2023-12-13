@@ -73,7 +73,8 @@ public:
             return false;
         }
 
-        const Point hitPoint = ray(tClose);
+        // this also places the hitpoint on the sphere since it has radius one
+        const Point hitPoint = static_cast<Point>((static_cast<Vector>(ray(tClose))).normalized());
 
         // We have found a successful hit, so update in intersection object
         its.t = tClose;
