@@ -47,7 +47,7 @@ struct MetallicLobe {
                             microfacet::smithG1(this->alpha, halfvector, wo) *
                             microfacet::smithG1(this->alpha, halfvector, wi);
         // the forshortening cosTheta(wi) cancels in denominator
-        float denominator = 4*Frame::cosTheta(wo);
+        float denominator = 4*Frame::absCosTheta(wo);
         
         return BsdfEval{
             .value = (numerator/denominator)

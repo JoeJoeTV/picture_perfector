@@ -1,7 +1,9 @@
 #include <lightwave.hpp>
 
 namespace lightwave {
-class DirectIntegretor : public SamplingIntegrator {
+class Pathtracer : public SamplingIntegrator {
+
+    int m_depth;
     
     Color calculateLight(Intersection &its, Sampler &rng) {
         if (not this->m_scene->hasLights()) {
@@ -38,11 +40,11 @@ class DirectIntegretor : public SamplingIntegrator {
     }
 
 public:
-    DirectIntegretor(const Properties &properties)
+    Pathtracer(const Properties &properties)
     : SamplingIntegrator(properties) {
         // to parse properties from the scene description, use properties.get(name, default_value)
         // you can also omit the default value if you want to require the user to specify a value
-        // m_remap = properties.get<bool>("remap", true);
+        m_depth = properties.get<int>("depth", 2);
     }
 
     /**
@@ -50,51 +52,61 @@ public:
      * This will be run for each pixel of the image, potentially with multiple samples for each pixel.
      */
     Color Li(const Ray &ray, Sampler &rng) override {
-        // intersect the ray with the scene
-        Intersection its = m_scene->intersect(ray, rng);
+        // accumulatedLight can be as the current value of the pixel
+        Color accumulatedLight = Color(0.f);
+        // accumulatedWeight is the light will be absopred along the path so far
+        Color accumulatedWeight = Color(1.f);
+        Ray currentRay = ray;
 
-        // if no intersection occured
-        if (its.instance == nullptr) {
-            return (m_scene->evaluateBackground(ray.direction)).value;
-        }
+        for (int i = 0; i < m_depth; i++) {
+            // intersect the ray with the scene
+            Intersection its = m_scene->intersect(currentRay, rng);
 
-        // sample the bsdf of the hit instance
-        BsdfSample sample = its.sampleBsdf(rng);
+            // if no intersection occured
+            if (!its) {
+                Color backgroundLight = (m_scene->evaluateBackground(currentRay.direction)).value;
+                accumulatedLight += accumulatedWeight * backgroundLight;
+                break;
+            }
+            
+            // sample the bsdf for a new bounce and weight
+            BsdfSample sample = its.sampleBsdf(rng);
 
-        const Color lightContribution = calculateLight(its, rng);
+            // get emissions of intersection
+            Color emissions = its.evaluateEmission();
 
-        // update weight of sample to account for emission if there are emissions
-        Color emissions = its.evaluateEmission();
-        
-        // trace secondary ray
-        Vector directionVectorSecondRay = sample.wi.normalized();
-        Ray secondaryRay = Ray(its.position, directionVectorSecondRay);
-        Intersection its2 = m_scene->intersect(secondaryRay, rng);
+            // next event estimation to evaluate light
+            Color lightContribution = calculateLight(its, rng);
 
-        if (its2.instance == nullptr) {
-            // no hit occured -> update the weight with the light
-            sample.weight *= (m_scene->evaluateBackground(secondaryRay.direction)).value;    
-        } else {
-            sample.weight *= its2.evaluateEmission();
-        }
+            // update accumulated light and weigt
+            if (i == m_depth-1) {
+                lightContribution = Color(0.f);
+            }
+            accumulatedLight += accumulatedWeight * (emissions + lightContribution);
+            accumulatedWeight *= sample.weight;         
 
-        return Color(sample.weight) + emissions + lightContribution;
+            // update variables for next iteration
+            currentRay = Ray(its.position, sample.wi.normalized());
+        }  
+
+        return accumulatedLight;
     }
 
     /// @brief An optional textual representation of this class, which can be useful for debugging. 
     std::string toString() const override {
         return tfm::format(
-            "CameraIntegrator[\n"
+            "Pathtracer[\n"
             "  sampler = %s,\n"
             "  image = %s,\n"
+            "  depth = %s,\n"
             "]",
             indent(m_sampler),
-            indent(m_image)
+            indent(m_image),
+            indent(m_depth)
         );
     }
 };
 
 }
 
-// this informs lightwave to use our class CameraIntegrator whenever a <integrator type="camera" /> is found in a scene file
-REGISTER_INTEGRATOR(DirectIntegretor, "direct")
+REGISTER_INTEGRATOR(Pathtracer, "pathtracer")
