@@ -9,7 +9,12 @@ struct DiffuseLobe {
     Color color;
 
     BsdfEval evaluate(const Vector &wo, const Vector &wi) const {
-        NOT_IMPLEMENTED
+        const float foreshortening = Frame::cosTheta(wi);
+        const Color weight = (this->color / Pi) * foreshortening;
+
+        return BsdfEval{
+            .value = weight
+        };
 
         // hints:
         // * copy your diffuse bsdf evaluate here
@@ -17,7 +22,12 @@ struct DiffuseLobe {
     }
 
     BsdfSample sample(const Vector &wo, Sampler &rng) const {
-        NOT_IMPLEMENTED
+        Vector wi = squareToCosineHemisphere(rng.next2D()).normalized();
+
+        return BsdfSample{
+            .wi = wi,
+            .weight = this->color
+        };
 
         // hints:
         // * copy your diffuse bsdf evaluate here
@@ -30,8 +40,18 @@ struct MetallicLobe {
     Color color;
 
     BsdfEval evaluate(const Vector &wo, const Vector &wi) const {
-        NOT_IMPLEMENTED
-
+        Vector halfvector = (wo + wi).normalized();
+  
+        Color numerator = this->color *
+                            microfacet::evaluateGGX(this->alpha, halfvector) * 
+                            microfacet::smithG1(this->alpha, halfvector, wo) *
+                            microfacet::smithG1(this->alpha, halfvector, wi);
+        // the forshortening cosTheta(wi) cancels in denominator
+        float denominator = 4*Frame::cosTheta(wo);
+        
+        return BsdfEval{
+            .value = (numerator/denominator)
+        };
         // hints:
         // * copy your roughconductor bsdf evaluate here
         // * you do not need to query textures
@@ -40,8 +60,17 @@ struct MetallicLobe {
     }
 
     BsdfSample sample(const Vector &wo, Sampler &rng) const {
-        NOT_IMPLEMENTED
+        // sample for a random visibel normal.
+        Vector halfvector = microfacet::sampleGGXVNDF(this->alpha, wo, rng.next2D()).normalized();
+        // the resulting vector when reflecting at the microfacet
+        Vector wi = reflect(wo, halfvector).normalized();
 
+        Color weight = this->color * microfacet::smithG1(this->alpha, halfvector, wi);
+        
+        return BsdfSample{
+            .wi = wi,
+            .weight = weight,
+        };
         // hints:
         // * copy your roughconductor bsdf sample here
         // * you do not need to query textures
@@ -98,8 +127,13 @@ public:
     BsdfEval evaluate(const Point2 &uv, const Vector &wo,
                       const Vector &wi) const override {
         const auto combination = combine(uv, wo);
-        NOT_IMPLEMENTED
-
+        // evaluate both bsdfs
+        Color diffuseWeight = combination.diffuse.evaluate(wo, wi).value;
+        Color metallicWeight = combination.metallic.evaluate(wo, wi).value;
+        
+        return BsdfEval{
+            .value = diffuseWeight + metallicWeight
+        };
         // hint: evaluate `combination.diffuse` and `combination.metallic` and
         // combine their results
     }
@@ -107,8 +141,21 @@ public:
     BsdfSample sample(const Point2 &uv, const Vector &wo,
                       Sampler &rng) const override {
         const auto combination = combine(uv, wo);
-        NOT_IMPLEMENTED
-
+        float probOfDiffusionSample = rng.next();
+        
+        if (probOfDiffusionSample < combination.diffuseSelectionProb) {
+            BsdfSample diffuseSample = combination.diffuse.sample(wo, rng);
+            return BsdfSample{
+                .wi = diffuseSample.wi,
+                .weight = diffuseSample.weight / combination.diffuseSelectionProb
+            };
+        } else {
+            BsdfSample metallicSample = combination.metallic.sample(wo, rng);
+            return BsdfSample{
+                .wi = metallicSample.wi,
+                .weight = metallicSample.weight / (1-combination.diffuseSelectionProb)
+            };
+        }
         // hint: sample either `combination.diffuse` (probability
         // `combination.diffuseSelectionProb`) or `combination.metallic`
     }
