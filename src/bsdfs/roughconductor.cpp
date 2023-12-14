@@ -21,7 +21,20 @@ public:
         // extremely specular distributions (alpha values below 10^-3)
         const auto alpha = std::max(float(1e-3), sqr(m_roughness->scalar(uv)));
 
-        NOT_IMPLEMENTED
+        // Calculate microfacet normal from wi and wo
+        const Vector n = (wi + wo).normalized();
+
+        // Calculate BSDF term
+        const Color a = this->m_reflectance->evaluate(uv)
+                        * microfacet::evaluateGGX(alpha, n)
+                        * microfacet::smithG1(alpha, n, wi)
+                        * microfacet::smithG1(alpha, n, wo);
+        const float b = 4 * Frame::cosTheta(wi) * Frame::cosTheta(wo);
+        const Color weight = (a / b);
+        
+        return BsdfEval{
+            .value = weight
+        };
 
         // hints:
         // * the microfacet normal can be computed from `wi' and `wo'
@@ -31,8 +44,21 @@ public:
                       Sampler &rng) const override {
         const auto alpha = std::max(float(1e-3), sqr(m_roughness->scalar(uv)));
 
-        NOT_IMPLEMENTED
-        
+        // Sample random microfacet normal vector
+        const Vector n = microfacet::sampleGGXVNDF(alpha, wo, rng.next2D());
+
+        // Reflect wo at sampled normal vector to get wi
+        const Vector wi = reflect(wo, n);
+
+        // Calculate weight using BSDF function, PDF of sampling function and 
+        // TODO: Add more notes about what cancels out + Find out why cos(theta:i) cancels out
+        const Color weight = this->m_reflectance->evaluate(uv) * microfacet::smithG1(alpha, n, wi);
+
+        return BsdfSample{
+            .wi = wi,
+            .weight = weight
+        };
+
         // hints:
         // * do not forget to cancel out as many terms from your equations as possible!
         //   (the resulting sample weight is only a product of two factors)

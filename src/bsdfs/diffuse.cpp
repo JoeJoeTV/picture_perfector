@@ -16,6 +16,12 @@ public:
         
         const float foreshortening = Frame::cosTheta(wi);
 
+        if (foreshortening < 0) {
+            return BsdfEval{
+                .value = Color(0.f)
+            }; 
+        }
+
         const Color weight = (this->m_albedo->evaluate(uv) / Pi) * foreshortening;
 
         return BsdfEval{
