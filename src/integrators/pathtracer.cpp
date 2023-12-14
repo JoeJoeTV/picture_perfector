@@ -28,9 +28,9 @@ class Pathtracer : public SamplingIntegrator {
         }
 
         // check that the lightsouce is not behind the object
-        if (dls.wi.dot(its.frame.normal) < 0) {
+        /*if (dls.wi.dot(its.frame.normal) < 0) {
             return Color(0.f);
-        }
+        }*/
 
         const BsdfEval bsdf_sample = its.evaluateBsdf(dls.wi);
 
@@ -76,16 +76,18 @@ public:
             Color emissions = its.evaluateEmission();
 
             // next event estimation to evaluate light
-            const Color lightContribution = calculateLight(its, rng);
+            Color lightContribution = calculateLight(its, rng);
 
             // update accumulated light and weigt
-            //assert((lightContribution)[0] >= 0);
+            if (i == m_depth-1) {
+                lightContribution = Color(0.f);
+            }
             accumulatedLight += accumulatedWeight * (emissions + lightContribution);
             accumulatedWeight *= sample.weight;         
 
             // update variables for next iteration
             currentRay = Ray(its.position, sample.wi.normalized());
-        }
+        }  
 
         return accumulatedLight;
     }
