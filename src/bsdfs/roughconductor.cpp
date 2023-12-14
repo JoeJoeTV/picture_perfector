@@ -21,19 +21,21 @@ public:
         // extremely specular distributions (alpha values below 10^-3)
         const auto alpha = std::max(float(1e-3), sqr(m_roughness->scalar(uv)));
 
-        Vector halfvector = (wo + wi).normalized();
-  
-        Color numerator = this->m_reflectance->evaluate(uv) *
-                            microfacet::evaluateGGX(alpha, halfvector) * 
-                            microfacet::smithG1(alpha, halfvector, wo) *
-                            microfacet::smithG1(alpha, halfvector, wi);
-          
-        // the forshortening cosTheta(wi) cancels in denominator
-        float denominator = 4*Frame::cosTheta(wo);
+        // Calculate microfacet normal from wi and wo
+        const Vector n = (wi + wo).normalized();
+
+        // Calculate BSDF term
+        const Color a = this->m_reflectance->evaluate(uv)
+                        * microfacet::evaluateGGX(alpha, n)
+                        * microfacet::smithG1(alpha, n, wi)
+                        * microfacet::smithG1(alpha, n, wo);
+        const float b = 4 * Frame::cosTheta(wi) * Frame::cosTheta(wo);
+        const Color weight = (a / b);
         
         return BsdfEval{
-            .value = numerator/denominator,
+            .value = weight
         };
+
         // hints:
         // * the microfacet normal can be computed from `wi' and `wo'
     }
@@ -42,17 +44,21 @@ public:
                       Sampler &rng) const override {
         const auto alpha = std::max(float(1e-3), sqr(m_roughness->scalar(uv)));
 
-        // sample for a random visibel normal.
-        Vector halfvector = microfacet::sampleGGXVNDF(alpha, wo, rng.next2D()).normalized();
-        // the resulting vector when reflecting at the microfacet
-        Vector wi = reflect(wo, halfvector).normalized();
+        // Sample random microfacet normal vector
+        const Vector n = microfacet::sampleGGXVNDF(alpha, wo, rng.next2D());
 
-        Color weight = this->m_reflectance->evaluate(uv) * microfacet::smithG1(alpha, halfvector, wi);
-        
+        // Reflect wo at sampled normal vector to get wi
+        const Vector wi = reflect(wo, n);
+
+        // Calculate weight using BSDF function, PDF of sampling function and 
+        // TODO: Add more notes about what cancels out + Find out why cos(theta:i) cancels out
+        const Color weight = this->m_reflectance->evaluate(uv) * microfacet::smithG1(alpha, n, wi);
+
         return BsdfSample{
             .wi = wi,
-            .weight = weight,
+            .weight = weight
         };
+
         // hints:
         // * do not forget to cancel out as many terms from your equations as possible!
         //   (the resulting sample weight is only a product of two factors)
