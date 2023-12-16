@@ -16,10 +16,10 @@ public:
         this->m_radius = properties.get<float>("radius", 1.0f);
     }
 
-    float estimateDistance(const Point p) const override {
-        Vector2 d = Vector2(abs(Vector2(p.x(), p.z()).length()), abs(p.y())) - Vector2(this->m_radius, this->m_height);
+    autodiff::real estimateDistance(const PointReal& p) const override {
+        Vector2Real d = Vector2Real(abs(Vector2Real(p.x(), p.z()).length()), abs(p.y())) - Vector2Real(this->m_radius, this->m_height);
 
-        return min(max(d.x(), d.y()), 0.0f) + Vector2(max(d.x(), 0.0f), max(d.y(), 0.0f)).length();
+        return min(max(d.x(), d.y()), 0.0f) + Vector2Real(max(d.x(), 0.0f), max(d.y(), 0.0f)).length();
     }
 
     Bounds getBoundingBox() const override {

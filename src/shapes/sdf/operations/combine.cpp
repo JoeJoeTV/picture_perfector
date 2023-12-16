@@ -1,6 +1,10 @@
 #include <lightwave.hpp>
 #include "../sdfobject.hpp"
 
+using autodiff::detail::abs;
+using autodiff::detail::min;
+using autodiff::detail::max;
+
 namespace lightwave {
 
 enum CombineMode {
@@ -10,6 +14,11 @@ enum CombineMode {
 // See https://iquilezles.org/articles/distfunctions/
 float smoothUnion(const float d1, const float d2, const float k) {
     float h = max(k - abs(d1-d2), 0.0f);
+    return min(d1, d2) - h*h*0.25/k;
+}
+
+autodiff::real smoothUnion(const autodiff::real d1, const autodiff::real d2, const autodiff::real k) {
+    autodiff::real h = max(k - abs(d1-d2), 0.0f);
     return min(d1, d2) - h*h*0.25/k;
 }
 
@@ -49,9 +58,9 @@ public:
         this->m_smoothSize = properties.get<float>("k", 1.0f);
     }
 
-    float estimateDistance(const Point p) const override {
-        const float EDLeft = this->m_firstChild->estimateDistance(p);
-        const float EDRight = this->m_secondChild->estimateDistance(p);
+    autodiff::real estimateDistance(const PointReal& p) const override {
+        const autodiff::real EDLeft = this->m_firstChild->estimateDistance(p);
+        const autodiff::real EDRight = this->m_secondChild->estimateDistance(p);
         
         if (this->m_smooth) {
             switch (this->m_combineMode) {

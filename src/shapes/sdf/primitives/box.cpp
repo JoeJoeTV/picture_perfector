@@ -12,11 +12,11 @@ public:
         this->m_corner = properties.get<Point>("corner", Point(1.0f, 1.0f, 1.0f));
     }
 
-    float estimateDistance(const Point p) const override {
-        Point absP = Point{abs(p.x()), abs(p.y()), abs(p.z())};
+    autodiff::real estimateDistance(const PointReal& p) const override {
+        PointReal absP = PointReal{abs(p.x()), abs(p.y()), abs(p.z())};
 
-        Vector q = absP - this->m_corner;
-        Vector maxQ0 = Vector{max(q.x(), 0.0f), max(q.y(), 0.0f), max(q.z(), 0.0f)};
+        VectorReal q = absP - this->m_corner.cast<autodiff::real>();
+        VectorReal maxQ0 = VectorReal{max(q.x(), 0.0f), max(q.y(), 0.0f), max(q.z(), 0.0f)};
         
         return maxQ0.length() + min(max(q.x(), max(q.y(), q.z())), 0.0f);
     }

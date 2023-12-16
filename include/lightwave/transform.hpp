@@ -36,6 +36,18 @@ public:
         return Vector(result.x(), result.y(), result.z());
     }
 
+    /// @brief Transforms the given point.
+    PointReal apply(const PointReal &point) const {
+        const Vector4Real result = m_transform.cast<autodiff::real>() * Vector4Real(VectorReal(point), 1);
+        return VectorReal(result.x(), result.y(), result.z()) / result.w();
+    }
+
+    /// @brief Transforms the given vector.
+    VectorReal apply(const VectorReal &vector) const {
+        const Vector4Real result = m_transform.cast<autodiff::real>() * Vector4Real(vector, 0);
+        return VectorReal(result.x(), result.y(), result.z());
+    }
+
     /**
      * @brief Transforms the given ray.
      * @warning The ray direction will not be normalized, as its transformed length
@@ -58,6 +70,18 @@ public:
     Vector inverse(const Vector &vector) const {
         const Vector4 result = m_inverse * Vector4(vector, 0);
         return Vector(result.x(), result.y(), result.z());
+    }
+
+    /// @brief Applies the inverse transform to the given point.
+    PointReal inverse(const PointReal &point) const {
+        const Vector4Real result = m_inverse.cast<autodiff::real>() * Vector4Real(VectorReal(point), 1);
+        return VectorReal(result.x(), result.y(), result.z()) / result.w();
+    }
+
+    /// @brief Applies the inverse transform to the given vector.
+    VectorReal inverse(const VectorReal &vector) const {
+        const Vector4Real result = m_inverse.cast<autodiff::real>() * Vector4Real(vector, 0);
+        return VectorReal(result.x(), result.y(), result.z());
     }
 
     /**

@@ -27,13 +27,11 @@ public:
         this->m_scale = scale.x();
     }
 
-    float estimateDistance(const Point p) const override {
-        Point pt;
+    autodiff::real estimateDistance(const PointReal& p) const override {
+        PointReal pt = this->m_transform->inverse(p);
 
-        pt = this->m_transform->inverse(p);
-
-        return this->m_child->estimateDistance(Point(Vector(pt) / this->m_scale)) * this->m_scale;
-    }   
+        return this->m_child->estimateDistance(PointReal(VectorReal(pt) / this->m_scale)) * this->m_scale;
+    }
 
     Bounds getBoundingBox() const override {
         const Bounds oldBounds = this->m_child->getBoundingBox();

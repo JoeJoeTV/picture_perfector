@@ -1,9 +1,17 @@
 #include <lightwave.hpp>
+
+//#define AUTODIFF_ENABLE_IMPLICIT_CONVERSION_REAL = 1
+#include <autodiff/forward/real.hpp>
+#include <autodiff/forward/real/eigen.hpp>
 #include "sdf/sdfobject.hpp"
 
 namespace lightwave {
 
-/// @brief A Sphere with radius 1 centered at (0,0,0)
+autodiff::real f(const Point2Real v) {
+    return Vector2Real(v).length();
+}
+
+/// @brief A shape defined by a signed distance function (SDF)
 class SDFShape : public Shape {
     /// @brief Maximum amount of ray-marching steps to take before counting as no intersection
     int m_maxSteps;
@@ -48,7 +56,7 @@ public:
         this->m_bounds = this->m_sdfChild->getBoundingBox();
     }
 
-    float estimateDistance(const Point p) const {
+    autodiff::real estimateDistance(const PointReal& p) const {
         return this->m_sdfChild->estimateDistance(p);
     }
 
@@ -64,10 +72,10 @@ public:
         }
 
         for (steps = 0; steps < this->m_maxSteps; steps++) {
-            Point currPoint = ray(marchDistance);
+            PointReal currPoint = ray(marchDistance).cast<autodiff::real>();
+            float distance = static_cast<float>(this->estimateDistance(currPoint));
 
-            float distance = this->estimateDistance(currPoint);
-
+            // Advance ray by calculated distance
             marchDistance += distance;
 
             // If distance is too large, we know that we don't have a (new) intersection and can directly abort
@@ -78,7 +86,7 @@ public:
             // If hitpoint would be behind the bounding box, we don't need to check further
             // as the bounding box includes the object to render and thus the distance will only increase
             if ((marchDistance > boundsT) and (!this->m_bounds.includes(ray(marchDistance)))) {
-                //return false;
+                return false;
             }
 
             // If the distance is smaller than the threshold, we can count this as a hit on the object and return the intersection
@@ -93,20 +101,28 @@ public:
 
         its.t = marchDistance;
 
-        Point hitP = ray(marchDistance);
-
+        // Store fraction of steps to maximum steps such that it can be visualized with the "sdf" integrator
         its.stats.sdfStepFraction = static_cast<float>(steps) / this->m_maxSteps;
 
+        // We currently don't have any texture mapping, so the UV coordinates are constant
         its.uv[0] = 0;
         its.uv[1] = 0;
 
-        its.position = hitP;
 
-        its.frame.normal = Vector{
-            this->estimateDistance(hitP + Vector{1.0, 0.0f, 0.0f} * this->m_normalEpsilon) - this->estimateDistance(hitP - Vector{1.0f, 0.0f, 0.0f} * this->m_normalEpsilon),
-            this->estimateDistance(hitP + Vector{0.0f, 1.0f, 0.0f} * this->m_normalEpsilon) - this->estimateDistance(hitP - Vector{0.0f, 1.0f, 0.0f} * this->m_normalEpsilon),
-            this->estimateDistance(hitP + Vector{0.0f, 0.0f, 1.0f} * this->m_normalEpsilon) - this->estimateDistance(hitP - Vector{0.0f, 0.0f, 1.0f} * this->m_normalEpsilon),
-        }.normalized();
+        PointReal hitPoint = ray(marchDistance).cast<autodiff::real>();
+
+        its.position = hitPoint.cast<float>();
+
+        using autodiff::wrt;
+        using autodiff::at;
+        using autodiff::derivative;
+
+        its.frame.normal = Vector(
+            static_cast<float>(derivative([&](auto p){return this->estimateDistance(p);}, wrt(hitPoint.x()), at(hitPoint))),
+            static_cast<float>(derivative([&](auto p){return this->estimateDistance(p);}, wrt(hitPoint.y()), at(hitPoint))),
+            static_cast<float>(derivative([&](auto p){return this->estimateDistance(p);}, wrt(hitPoint.z()), at(hitPoint)))
+        ).normalized();
+
 
         its.frame.tangent = its.frame.normal.cross(Vector(1.0f, 0.0f, 0.0f));
 
@@ -117,7 +133,6 @@ public:
 
         // Tangent is not yet normalized, so do that
         its.frame.tangent = its.frame.tangent.normalized();
-
         its.frame.bitangent = its.frame.normal.cross(its.frame.tangent).normalized();
 
         its.pdf = 0.0f;

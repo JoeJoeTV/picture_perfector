@@ -14,11 +14,11 @@ public:
     SDFThicken(const Properties &properties) {
         this->m_child = properties.getChild<SDFObject>();
         this->m_amount = properties.get<float>("amount");
-    }
+    } 
 
-    float estimateDistance(const Point p) const override {
+    autodiff::real estimateDistance(const PointReal& p) const override {
         return this->m_child->estimateDistance(p) - this->m_amount;
-    }   
+    }
 
     Bounds getBoundingBox() const override {
         const Bounds oldBounds = this->m_child->getBoundingBox();

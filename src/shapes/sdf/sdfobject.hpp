@@ -1,5 +1,8 @@
 #include <lightwave.hpp>
 
+#include <autodiff/forward/real.hpp>
+#include <autodiff/forward/real/eigen.hpp>
+
 namespace lightwave {
 
 class SDFObject : public Object {
@@ -10,7 +13,7 @@ public:
     /// @brief Returns the distance to the SDF object from point @param p
     /// @param p The point at which to evaluate the distance
     /// @return The distance to the SDF object
-    virtual float estimateDistance(const Point p) const = 0;
+    virtual autodiff::real estimateDistance(const PointReal& p) const = 0;
 
     /// @brief Calculates the axis aligned bounding box encapsulating the SDF object
     /// @return @class Bounds object represensing the axis aligned bounding box
@@ -18,16 +21,16 @@ public:
     virtual Bounds getBoundingBox() const {
         // Calculate max point in each direction
         const Point maxP = Point(
-            BBCHECK_DISTANCE - estimateDistance(Point(BBCHECK_DISTANCE, 0.0f, 0.0f)),
-            BBCHECK_DISTANCE - estimateDistance(Point(0.0f, BBCHECK_DISTANCE, 0.0f)),
-            BBCHECK_DISTANCE - estimateDistance(Point(0.0f, 0.0f, BBCHECK_DISTANCE))
+            BBCHECK_DISTANCE - static_cast<float>(estimateDistance(PointReal(BBCHECK_DISTANCE, 0.0f, 0.0f))),
+            BBCHECK_DISTANCE - static_cast<float>(estimateDistance(PointReal(0.0f, BBCHECK_DISTANCE, 0.0f))),
+            BBCHECK_DISTANCE - static_cast<float>(estimateDistance(PointReal(0.0f, 0.0f, BBCHECK_DISTANCE)))
         );
 
         // Calculate min point in each direction
         const Point minP = Point(
-            -BBCHECK_DISTANCE + estimateDistance(Point(-BBCHECK_DISTANCE, 0.0f, 0.0f)),
-            -BBCHECK_DISTANCE + estimateDistance(Point(0.0f, -BBCHECK_DISTANCE, 0.0f)),
-            -BBCHECK_DISTANCE + estimateDistance(Point(0.0f, 0.0f, -BBCHECK_DISTANCE))
+            -BBCHECK_DISTANCE + static_cast<float>(estimateDistance(PointReal(-BBCHECK_DISTANCE, 0.0f, 0.0f))),
+            -BBCHECK_DISTANCE + static_cast<float>(estimateDistance(PointReal(0.0f, -BBCHECK_DISTANCE, 0.0f))),
+            -BBCHECK_DISTANCE + static_cast<float>(estimateDistance(PointReal(0.0f, 0.0f, -BBCHECK_DISTANCE)))
         );
 
         return Bounds(minP, maxP);

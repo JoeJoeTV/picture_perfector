@@ -12,8 +12,8 @@ public:
         this->m_radius = properties.get<float>("radius", 1.0f);
     }
 
-    float estimateDistance(const Point p) const override {
-        return (p - Point{0.0f, 0.0f, 0.0f}).length() - this->m_radius;
+    autodiff::real estimateDistance(const PointReal& p) const override {
+        return VectorReal(p).length() - this->m_radius;
     }
 
     Bounds getBoundingBox() const override {

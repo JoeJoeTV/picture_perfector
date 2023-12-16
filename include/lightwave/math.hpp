@@ -8,10 +8,14 @@
 #include <lightwave/core.hpp>
 #include <lightwave/logger.hpp>
 
+#include <autodiff/forward/real.hpp>
+using autodiff::detail::sqrt;
+
 #include <cmath>
 #include <algorithm>
 #include <array>
 #include <optional>
+
 
 namespace lightwave {
 
@@ -173,8 +177,8 @@ public:
     : TPoint<Type, Dimension>(point.data()) {}
 
     /// @brief Computes the dot product (aka scalar product) with respect to another vector.
-    float dot(const TVector &other) const {
-        float result = 0;
+    Type dot(const TVector &other) const {
+        Type result = 0;
         for (int i = 0; i < Dimension; i++) result += m_data[i] * other.m_data[i];
         return result;
     }
@@ -190,15 +194,15 @@ public:
     }
 
     /// @brief Computes the squared length of this vector. 
-    float lengthSquared() const { return dot(*this); }
+    Type lengthSquared() const { return dot(*this); }
     /// @brief Computes the length of this vector. 
-    float length() const { return std::sqrt(lengthSquared()); }
+    Type length() const { return sqrt(lengthSquared()); }
     /// @brief Returns a normalized copy of this vector.
     auto normalized() const { return *this / length(); }
 
     /// @brief Returns the length of this vector along with a normalized copy.
     auto lengthAndNormalized() const {
-        const float length = this->length();
+        const Type length = this->length();
         return std::make_pair(length, *this / length);
     }
 
@@ -358,9 +362,9 @@ public:
         static_assert(Rows <= 3);
 
         if constexpr (Rows == 3 && Columns == 3) {
-            float v = 0;
+            Type v = 0;
             for (int i = 0; i < 3; i++) {
-                float a = 1, b = 1;
+                Type a = 1, b = 1;
                 for (int j = 0; j < 3; j++) {
                     a *= (*this)((i + j) % 3, j);
                     b *= (*this)((i + j) % 3, 2 - j);
@@ -380,6 +384,10 @@ public:
     friend auto operator*(const TMatrix &a, Type b) { TMatrix BUILD2(a(row, column) * b) }
     friend auto operator+(const TMatrix &a, const TMatrix &b) { TMatrix BUILD2(a(row, column) + b(row, column)) }
     friend auto operator-(const TMatrix &a, const TMatrix &b) { TMatrix BUILD2(a(row, column) - b(row, column)) }
+
+    /// @brief Converts the matrix to a different datatype.
+    template<typename Type2>
+    auto cast() const { TMatrix<Type2, Rows, Columns> BUILD2(Type2(m_data[row][column])) }
 
     /// @brief Constructs an identity matrix for the given dimensions.
     static auto identity() { TMatrix BUILD2(row == column ? 1.0f : 0.0f) }
@@ -536,6 +544,11 @@ using Point2i = TPoint<int, 2>;
 /// @brief A three-dimensional point with floating point components.
 using Point = TPoint<float, 3>;
 
+/// @note for using lightwave with autodiff reals
+using Point2Real = lightwave::TPoint<autodiff::real, 2>;
+/// @note for using lightwave with autodiff reals
+using PointReal = lightwave::TPoint<autodiff::real, 3>;
+
 /// @brief A two-dimensional vector with floating point components.
 using Vector2 = TVector<float, 2>;
 /// @brief A two-dimensional vector with integer components.
@@ -547,6 +560,13 @@ using Vector3i = TVector<int, 3>;
 /// @brief A four-dimensional vector with floating point components (used for homogeneous coordinates).
 using Vector4 = TVector<float, 4>;
 
+/// @note for using lightwave with autodiff reals
+using Vector2Real = lightwave::TVector<autodiff::real, 2>;
+/// @note for using lightwave with autodiff reals
+using VectorReal = lightwave::TVector<autodiff::real, 3>;
+/// @note for using lightwave with autodiff reals
+using Vector4Real = lightwave::TVector<autodiff::real, 4>;
+
 /// @brief An integer rectangle (e.g., to describe the blocks of an image).
 using Bounds2i = TBounds<int, 2>;
 /// @brief A three-dimensional axis-aligned bounding box with floating point components.
@@ -556,6 +576,13 @@ using Bounds = TBounds<float, 3>;
 using Matrix3x3 = TMatrix<float, 3, 3>;
 /// @brief A 4x4 matrix with floating point components (used for homogeneous coordinates).
 using Matrix4x4 = TMatrix<float, 4, 4>;
+
+/// @brief A 3x3 matrix with floating point components.
+/// @note for using lightwave with autodiff reals
+using Matrix3x3Real = TMatrix<autodiff::real, 3, 3>;
+/// @brief A 4x4 matrix with floating point components (used for homogeneous coordinates).
+/// @note for using lightwave with autodiff reals
+using Matrix4x4Real = TMatrix<autodiff::real, 4, 4>;
 
 /// @brief Computes the component-wise modulo operation of two points. 
 template<int Dimension>
