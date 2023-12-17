@@ -20,18 +20,20 @@ public:
     /// @note The default implmentation uses the @def estimateDistance function to create a bounding box
     virtual Bounds getBoundingBox() const {
         // Calculate max point in each direction
-        const Point maxP = Point(
-            BBCHECK_DISTANCE - static_cast<float>(estimateDistance(PointReal(BBCHECK_DISTANCE, 0.0f, 0.0f))),
-            BBCHECK_DISTANCE - static_cast<float>(estimateDistance(PointReal(0.0f, BBCHECK_DISTANCE, 0.0f))),
-            BBCHECK_DISTANCE - static_cast<float>(estimateDistance(PointReal(0.0f, 0.0f, BBCHECK_DISTANCE)))
+        const Vector maxDist = Vector(
+            static_cast<float>(estimateDistance(PointReal(BBCHECK_DISTANCE, 0.0f, 0.0f))),
+            static_cast<float>(estimateDistance(PointReal(0.0f, BBCHECK_DISTANCE, 0.0f))),
+            static_cast<float>(estimateDistance(PointReal(0.0f, 0.0f, BBCHECK_DISTANCE)))
         );
+        const Point maxP = Point(BBCHECK_DISTANCE) - maxDist;
 
         // Calculate min point in each direction
-        const Point minP = Point(
-            -BBCHECK_DISTANCE + static_cast<float>(estimateDistance(PointReal(-BBCHECK_DISTANCE, 0.0f, 0.0f))),
-            -BBCHECK_DISTANCE + static_cast<float>(estimateDistance(PointReal(0.0f, -BBCHECK_DISTANCE, 0.0f))),
-            -BBCHECK_DISTANCE + static_cast<float>(estimateDistance(PointReal(0.0f, 0.0f, -BBCHECK_DISTANCE)))
+        const Vector minDist = Vector(
+            static_cast<float>(estimateDistance(PointReal(-BBCHECK_DISTANCE, 0.0f, 0.0f))),
+            static_cast<float>(estimateDistance(PointReal(0.0f, -BBCHECK_DISTANCE, 0.0f))),
+            static_cast<float>(estimateDistance(PointReal(0.0f, 0.0f, -BBCHECK_DISTANCE)))
         );
+        const Point minP = Point(-BBCHECK_DISTANCE) + minDist;
 
         return Bounds(minP, maxP);
     }

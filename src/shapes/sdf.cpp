@@ -54,6 +54,8 @@ public:
 
         // Pre-compute bounding box
         this->m_bounds = this->m_sdfChild->getBoundingBox();
+
+        logger(EInfo, "built bounding box for SDF with: min=%s max=%s", this->m_bounds.min(), this->m_bounds.max());
     }
 
     autodiff::real estimateDistance(const PointReal& p) const {
