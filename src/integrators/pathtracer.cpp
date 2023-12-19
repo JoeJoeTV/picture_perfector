@@ -81,7 +81,7 @@ public:
             accumulatedWeight *= sample.weight;         
 
             // update variables for next iteration
-            currentRay = Ray(its.position, sample.wi.normalized());
+            currentRay = Ray(its.position, sample.wi.normalized(), i+1);
         }  
 
         return accumulatedLight;
