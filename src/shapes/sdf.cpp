@@ -77,8 +77,13 @@ public:
             PointReal currPoint = ray(marchDistance).cast<autodiff::real>();
             float distance = static_cast<float>(this->estimateDistance(currPoint));
 
-            // Advance ray by calculated distance
-            marchDistance += distance;
+            if (marchDistance < this->m_minDistance) {
+                marchDistance += abs(distance);
+                continue;
+            } else {
+                // Advance ray by calculated distance
+                marchDistance += distance;
+            }
 
             // If distance is too large, we know that we don't have a (new) intersection and can directly abort
             if ((marchDistance > its.t) or (marchDistance >= Infinity) or (marchDistance < 0)) {
