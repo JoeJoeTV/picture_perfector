@@ -113,7 +113,7 @@ public:
 
     AreaSample sampleArea(Sampler &rng) const override {
         Point2 rnd = rng.next2D();
-        Vector position = squareToUniformSphere(rnd);
+        Vector position = squareToUniformSphere(rnd).normalized();
 
         AreaSample sample;
         populate(sample, position); // compute the shading frame, texture coordinates and area pdf (same as intersection)
