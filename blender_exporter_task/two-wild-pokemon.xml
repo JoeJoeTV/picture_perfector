@@ -1,0 +1,97 @@
+<scene id="scene">
+  <camera type="perspective">
+    <integer name="width" value="1920"/>
+    <integer name="height" value="1080"/>
+    <float name="fov" value="26"/>
+    <string name="fovAxis" value="x"/>
+    <transform>
+      <matrix value="0.618,0.371,-0.693,13.8,  0.781,-0.385,0.491,-9.6,  -0.0844,-0.845,-0.528,9,  0,0,0,1"/>
+    </transform>
+  </camera>
+  <instance>
+    <bsdf type="principled">
+      <texture name="baseColor" type="constant" value="0.8,0.333,0.0822"/>
+      <texture name="roughness" type="image" filename="textures/Metal_roughness.jpg" linear="true"/>
+      <texture name="metallic" type="constant" value="1"/>
+      <texture name="specular" type="constant" value="0"/>
+    </bsdf>
+    <shape type="mesh" filename="meshes/Cube.002.ply"/>
+    <transform>
+      <matrix value="12,-17.5,0,1.52,  17.5,12,0,-3.06,  0,0,21.2,0.0527,  0,0,0,1"/>
+    </transform>
+  </instance>
+  <instance>
+    <bsdf type="principled">
+      <texture name="baseColor" type="constant" value="0.102,0.271,0.8"/>
+      <texture name="roughness" type="constant" value="0.227"/>
+      <texture name="metallic" type="constant" value="0"/>
+      <texture name="specular" type="constant" value="0"/>
+    </bsdf>
+    <shape type="mesh" filename="meshes/_m_0_Cube.003.ply"/>
+    <transform>
+      <matrix value="-1.7,2.57e-07,0,4.08,  -2.57e-07,-1.7,0,-1.93,  0,0,1.7,0.0527,  0,0,0,1"/>
+    </transform>
+  </instance>
+  <instance>
+    <bsdf type="principled">
+      <texture name="baseColor" type="constant" value="0.8,0.8,0.8"/>
+      <texture name="roughness" type="constant" value="0.5"/>
+      <texture name="metallic" type="constant" value="0"/>
+      <texture name="specular" type="constant" value="0"/>
+    </bsdf>
+    <shape type="mesh" filename="meshes/_m_1_Cube.003.ply"/>
+    <transform>
+      <matrix value="-1.7,2.57e-07,0,4.08,  -2.57e-07,-1.7,0,-1.93,  0,0,1.7,0.0527,  0,0,0,1"/>
+    </transform>
+  </instance>
+  <instance>
+    <bsdf type="principled">
+      <texture name="baseColor" type="constant" value="0.166,0.299,1"/>
+      <texture name="roughness" type="constant" value="0"/>
+      <texture name="metallic" type="constant" value="1"/>
+      <texture name="specular" type="constant" value="0"/>
+    </bsdf>
+    <shape type="mesh" filename="meshes/_m_2_Cube.003.ply"/>
+    <transform>
+      <matrix value="-1.7,2.57e-07,0,4.08,  -2.57e-07,-1.7,0,-1.93,  0,0,1.7,0.0527,  0,0,0,1"/>
+    </transform>
+  </instance>
+  <instance>
+    <bsdf type="principled">
+      <texture name="baseColor" type="image" filename="textures/dragonair1.jpg"/>
+      <texture name="roughness" type="constant" value="0"/>
+      <texture name="metallic" type="constant" value="0"/>
+      <texture name="specular" type="constant" value="0"/>
+    </bsdf>
+    <shape type="mesh" filename="meshes/_m_3_Cube.003.ply"/>
+    <transform>
+      <matrix value="-1.7,2.57e-07,0,4.08,  -2.57e-07,-1.7,0,-1.93,  0,0,1.7,0.0527,  0,0,0,1"/>
+    </transform>
+  </instance>
+  <instance>
+    <bsdf type="principled">
+      <texture name="baseColor" type="image" filename="textures/FloorTiles_basecolor.jpg"/>
+      <texture name="roughness" type="image" filename="textures/FloorTiles_roughness.jpg" linear="true"/>
+      <texture name="metallic" type="constant" value="0"/>
+      <texture name="specular" type="constant" value="0"/>
+    </bsdf>
+    <texture name="normal" type="image" filename="textures/FloorTiles_normal.jpg" linear="true"/>
+    <shape type="mesh" filename="meshes/Cube.001.ply"/>
+    <transform>
+      <matrix value="1,0,0,-9.84,  0,1,0,4.43,  0,0,1,0.0264,  0,0,0,1"/>
+    </transform>
+  </instance>
+  <light type="directional" direction="-0.8,-1,-1" intensity="2.1,1.88,1.65"/>
+  <light type="directional" direction="0.8,1,-1" intensity="2.1,1.88,1.65"/>
+  <light type="envmap">
+    <texture type="image" filename="textures/computer_workroom_2K_87bf55fb-d74f-4c8b-99c2-13e8102c03ba.exr.exr" border="clamp"/>
+    <transform>
+      <matrix value="1,0,0,0,  0,0,1,0,  0,-1,0,0,  0,0,0,1"/>
+    </transform>
+  </light>
+</scene>
+<integrator type="pathtracer" depth="3" nee="true" mis="true">
+  <ref id="scene"/>
+  <image id="noisy"/>
+  <sampler type="independent" count="64"/>
+</integrator>
