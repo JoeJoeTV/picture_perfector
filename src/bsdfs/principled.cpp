@@ -172,6 +172,11 @@ public:
                            indent(m_baseColor), indent(m_roughness),
                            indent(m_metallic), indent(m_specular));
     }
+
+    Color getAlbedo(const Point2 &uv) const override {
+        return m_baseColor->evaluate(uv);
+    }
+
 };
 
 } // namespace lightwave

@@ -71,6 +71,10 @@ public:
                            "]",
                            indent(m_reflectance), indent(m_roughness));
     }
+
+    Color getAlbedo(const Point2 &uv) const override {
+        return Color(0);
+    }
 };
 
 } // namespace lightwave
