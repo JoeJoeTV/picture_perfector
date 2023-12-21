@@ -7,6 +7,7 @@
 
 #include <lightwave/core.hpp>
 #include <lightwave/shape.hpp>
+#include <lightwave/medium.hpp>
 
 namespace lightwave {
 
@@ -34,6 +35,8 @@ class Instance : public Shape {
     bool m_flipNormal;
     /// @brief Tracks whether this instance has been added to the scene, i.e., could be hit by ray tracing.
     bool m_visible;
+    /// @brief The medium inside of this Instance
+    ref<Medium> m_medium;
     
     /// @brief Transforms the frame from object coordinates to world coordinates.
     inline void transformFrame(SurfaceEvent &surf) const;
@@ -45,6 +48,7 @@ public:
         m_bsdf = properties.getOptionalChild<Bsdf>();
         m_emission = properties.getOptionalChild<Emission>();
         m_transform = properties.getOptionalChild<Transform>();
+        m_medium = properties.getOptionalChild<Medium>();
         m_visible = false;
         
         m_flipNormal = false;
