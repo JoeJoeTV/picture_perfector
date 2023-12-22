@@ -76,5 +76,5 @@
         <ref name="input" id="noisy"/>
         <ref name="normals" id="normals"/>
         <ref name="albedo" id="albedo"/>
-        <image id="denoised"/>
+        <image id="output"/>
     </postprocess>
