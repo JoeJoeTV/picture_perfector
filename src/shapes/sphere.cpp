@@ -116,6 +116,7 @@ public:
         Vector position = squareToUniformSphere(rnd).normalized();
 
         AreaSample sample;
+        sample.area = 4*Pi;
         populate(sample, position); // compute the shading frame, texture coordinates and area pdf (same as intersection)
         return sample;
     }

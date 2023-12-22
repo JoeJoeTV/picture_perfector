@@ -108,6 +108,14 @@ Point Instance::getCentroid() const {
 
 AreaSample Instance::sampleArea(Sampler &rng) const {
     AreaSample sample = m_shape->sampleArea(rng);
+
+    // calculate how the area changes
+    Vector tangent = m_transform->apply(sample.frame.tangent);
+    Vector bitangent = m_transform->apply(sample.frame.bitangent);
+    float crossProductLength = tangent.cross(bitangent).length();
+
+    // scale the 
+    sample.area *= crossProductLength;
     transformFrame(sample);
     return sample;
 }
