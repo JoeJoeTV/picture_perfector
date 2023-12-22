@@ -25,7 +25,7 @@ protected:
 public:
     Postprocess(const Properties &properties) {
         m_input = properties.get<Image>("input");
-        m_output = properties.getChild<Image>();
+        m_output = properties.getOptionalChild<Image>();
     }
 };
 

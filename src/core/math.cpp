@@ -168,11 +168,11 @@ BsdfEval Intersection::evaluateBsdf(const Vector &wi) const {
 }
 
 Color Intersection::getAlbedo() const{
-        if (instance != nullptr) {
+        if (instance == nullptr) {
             return Color(0);
         }
 
-        if (instance->bsdf() != nullptr) {
+        if (instance->bsdf() == nullptr) {
             return Color(0);
         }
         

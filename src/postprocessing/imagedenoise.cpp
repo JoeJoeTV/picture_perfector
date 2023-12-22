@@ -40,30 +40,31 @@ public:
             filter.setImage("normal", normalBuf, oidn::Format::Float3, width, height); // auxiliary
 
         filter.setImage("output", colorBuf,  oidn::Format::Float3, width, height); // denoised beauty
-        // filter.set("hdr", true); // beauty image is HDR
+        //filter.set("hdr", true); // beauty image is HDR
         filter.commit();
 
-        // Fill the input image buffers
-        //float* colorPtr = (float*)colorBuf.getData();
-        //float* albedoPtr = (float*)albedoBuf.getData();
+        // Fill the input image buffers;
+        m_output->copy(*m_input);
         memcpy(m_input->data(), colorBuf.getData(), width * height * 3 * sizeof(float));
 
         if (m_albedo != nullptr) 
             memcpy(m_albedo->data(), albedoBuf.getData(), width * height * 3 * sizeof(float));
 
         if (m_normals != nullptr)
-            memcpy(m_normals->data(), albedoBuf.getData(), width * height * 3 * sizeof(float));
+            memcpy(m_normals->data(), normalBuf.getData(), width * height * 3 * sizeof(float));
 
         // Filter the beauty image
-        filter.execute();
+        //for (int i = 0; i < 200; i++)
+            filter.execute();
 
         // Check for errors
         const char* errorMessage;
         if (device.getError(errorMessage) != oidn::Error::None)
             logger(EWarn, errorMessage);
 
+        std::cout << "Done with the filter" << std::endl;
         memcpy(colorBuf.getData(), m_output->data(), width * height * 3 * sizeof(float));
-
+        m_output->save();
     }
 
     virtual std::string toString() const override{
