@@ -5,15 +5,11 @@
 
 namespace lightwave {
 
+/// @brief Creates a transform that rotates @param a such that it the result is @param b
 Transform getRotationTransform(const Vector &a, const Vector &b) {
     const Vector ab_cross = a.cross(b).normalized();
     const float ab = a.dot(b);
-
-    //logger(EInfo, "Dot product: %f", ab);
-
     const double angle = acos(ab);
-
-    //logger(EInfo, "Rotation angle: %f", angle * Rad2Deg);
 
     Transform T;
 
@@ -45,29 +41,21 @@ void Instance::transformFrame(SurfaceEvent &surf) const {
     /// Apply normal map
     if (this->m_normal != nullptr) {
         const Color c = this->m_normal->evaluate(surf.uv);
-        //const Color tc = (2.0f * c) - Color(1.0f);
-        const Color tc = Color(
+        const Color tc = (2.0f * c) - Color(1.0f);
+        /* const Color tc = Color(
             2.0f * c.r() - 1.0f,
             2.0f * c.g() - 1.0f,
             c.b()
-        );
-        //const Color tc = c;
-        const Vector n = Vector(tc.r(), tc.g(), tc.b());
+        ); */
+        const Vector n = Vector(tc.r(), tc.g(), tc.b()).normalized();
         const Vector nw = surf.frame.toWorld(n).normalized();
-
-        //logger(EInfo, "-----------------------------------");
-
-        //logger(EInfo, "Image Map Normal vector: %s", surf.frame.normal);
 
         const Transform T = getRotationTransform(surf.frame.normal, nw);
 
-        //logger(EInfo, "Unmapped Normal vector: %s", nw);
-
-        surf.frame.normal = T.apply(surf.frame.normal).normalized();
+        surf.frame.normal = nw;
         surf.frame.tangent = T.apply(surf.frame.tangent).normalized();
-        surf.frame.bitangent = T.apply(surf.frame.bitangent).normalized();
-
-        //logger(EInfo, "Mapped World Normal vector: %s", surf.frame.normal);
+        surf.frame.bitangent = nw.cross(surf.frame.tangent).normalized();
+        surf.frame.tangent = nw.cross(surf.frame.bitangent).normalized();
     }
 
 }
