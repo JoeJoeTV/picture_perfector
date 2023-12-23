@@ -13,7 +13,6 @@ public:
     ImageDenoise(const Properties &properties): Postprocess(properties) {
         m_albedo = properties.get<Image>("albedo", nullptr);
         m_normals = properties.get<Image>("normals", nullptr);
-
     }
 
     void execute() override {
@@ -44,26 +43,25 @@ public:
         filter.commit();
 
         // Fill the input image buffers;
-        m_output->copy(*m_input);
-        memcpy(m_input->data(), colorBuf.getData(), width * height * 3 * sizeof(float));
+        m_output->copy(*m_albedo);
+        memcpy(colorBuf.getData(), m_input->data(), width * height * 3 * sizeof(float));
 
         if (m_albedo != nullptr) 
-            memcpy(m_albedo->data(), albedoBuf.getData(), width * height * 3 * sizeof(float));
+            memcpy(albedoBuf.getData(), m_albedo->data(), width * height * 3 * sizeof(float));
 
         if (m_normals != nullptr)
-            memcpy(m_normals->data(), normalBuf.getData(), width * height * 3 * sizeof(float));
+            memcpy(normalBuf.getData(), m_normals->data(), width * height * 3 * sizeof(float));
 
         // Filter the beauty image
-        //for (int i = 0; i < 200; i++)
-            filter.execute();
+        filter.execute();
 
         // Check for errors
         const char* errorMessage;
         if (device.getError(errorMessage) != oidn::Error::None)
             logger(EWarn, errorMessage);
 
-        std::cout << "Done with the filter" << std::endl;
-        memcpy(colorBuf.getData(), m_output->data(), width * height * 3 * sizeof(float));
+        // copy result into output
+        memcpy(m_output->data(), colorBuf.getData(), width * height * 3 * sizeof(float));
         m_output->save();
     }
 
