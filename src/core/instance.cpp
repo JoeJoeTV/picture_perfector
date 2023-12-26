@@ -27,17 +27,6 @@ void Instance::transformFrame(SurfaceEvent &surf) const {
 
     surf.position = this->m_transform->apply(surf.position);
 
-    // Keep tangent direction, transfrom and normalize it
-    surf.frame.tangent = this->m_transform->apply(surf.frame.tangent).normalized();
-    surf.frame.bitangent = this->m_transform->apply(surf.frame.bitangent).normalized();
-
-    if (this->m_flipNormal) {
-        surf.frame.bitangent = -surf.frame.bitangent;
-    }
-
-    surf.frame.normal = surf.frame.tangent.cross(surf.frame.bitangent).normalized();
-    surf.frame.bitangent = surf.frame.normal.cross(surf.frame.tangent).normalized();
-
     // Apply normal map if requested
     if (this->m_normal != nullptr) {
         // Read normal vector from normal map texture
@@ -49,15 +38,18 @@ void Instance::transformFrame(SurfaceEvent &surf) const {
             2.0f * nc.b() - 1.0f
         ).normalized();
         // Go from shading space to object space
-        const Vector nw = surf.frame.toWorld(n).normalized();
-
-        const Transform T = getRotationTransform(surf.frame.normal, nw);
-
-        surf.frame.normal = nw;
-        surf.frame.tangent = T.apply(surf.frame.tangent).normalized();
-        surf.frame.bitangent = nw.cross(surf.frame.tangent).normalized();
-        surf.frame.tangent = nw.cross(surf.frame.bitangent).normalized();
+        surf.frame.normal = surf.frame.toWorld(n).normalized();
     }
+
+    surf.frame.normal = this->m_transform->applyNormal(surf.frame.normal);
+
+    surf.frame = Frame(surf.frame.normal);
+
+    if (this->m_flipNormal) {
+        surf.frame.bitangent = -surf.frame.bitangent;
+    }
+
+    surf.frame.normal = surf.frame.tangent.cross(surf.frame.bitangent).normalized();
 
 }
 
