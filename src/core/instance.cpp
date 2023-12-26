@@ -41,8 +41,10 @@ void Instance::transformFrame(SurfaceEvent &surf) const {
         surf.frame.normal = surf.frame.toWorld(n).normalized();
     }
 
+    // Transform normal using transpose of inverse to world space
     surf.frame.normal = this->m_transform->applyNormal(surf.frame.normal);
 
+    // Build orthonormal basis using default constructor, which is good enough for now
     surf.frame = Frame(surf.frame.normal);
 }
 
