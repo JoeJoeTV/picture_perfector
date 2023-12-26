@@ -38,16 +38,17 @@ void Instance::transformFrame(SurfaceEvent &surf) const {
     surf.frame.normal = surf.frame.tangent.cross(surf.frame.bitangent).normalized();
     surf.frame.bitangent = surf.frame.normal.cross(surf.frame.tangent).normalized();
 
-    /// Apply normal map
+    // Apply normal map if requested
     if (this->m_normal != nullptr) {
-        const Color c = this->m_normal->evaluate(surf.uv);
-        const Color tc = (2.0f * c) - Color(1.0f);
-        /* const Color tc = Color(
-            2.0f * c.r() - 1.0f,
-            2.0f * c.g() - 1.0f,
-            c.b()
-        ); */
-        const Vector n = Vector(tc.r(), tc.g(), tc.b()).normalized();
+        // Read normal vector from normal map texture
+        const Color nc = this->m_normal->evaluate(surf.uv);
+        // Map x,y and z values into [-1,1]
+        const Vector n = Vector(
+            2.0f * nc.r() - 1.0f,
+            2.0f * nc.g() - 1.0f,
+            2.0f * nc.b() - 1.0f
+        ).normalized();
+        // Go from shading space to object space
         const Vector nw = surf.frame.toWorld(n).normalized();
 
         const Transform T = getRotationTransform(surf.frame.normal, nw);
