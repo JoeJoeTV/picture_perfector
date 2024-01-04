@@ -36,17 +36,17 @@ class ImageTexture : public Texture {
             break;
         
         case BorderMode::Repeat:
-            coords.x() = std::abs(iuv.x()) % this->m_image->resolution().x();
-            coords.y() = std::abs(iuv.y()) % this->m_image->resolution().y();
+            coords.x() = iuv.x() % this->m_image->resolution().x();
+            coords.y() = iuv.y() % this->m_image->resolution().y();
 
             // If negative, we have to flip the orientation for correct repetition
-            if (iuv.x() < 0) 
-                coords.x() = this->m_image->resolution().x() - coords.x();
-            if (iuv.y() < 0) 
-                coords.y() = this->m_image->resolution().y() - coords.y();
+            if (coords.x() < 0) 
+                coords.x() = this->m_image->resolution().x() + coords.x();
+            if (coords.y() < 0) 
+                coords.y() = this->m_image->resolution().y() + coords.y();
             break;
         }
-
+        
         return this->m_image->get(coords);
     }
 
