@@ -7,10 +7,6 @@
 
 namespace lightwave {
 
-autodiff::real f(const Point2Real v) {
-    return Vector2Real(v).length();
-}
-
 /// @brief A shape defined by a signed distance function (SDF)
 class SDFShape : public Shape {
     /// @brief Maximum amount of ray-marching steps to take before counting as no intersection
