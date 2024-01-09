@@ -58,74 +58,96 @@ public:
         return this->m_sdfChild->estimateDistance(p);
     }
 
+    #define ADVANCE_MULTIPLIER 3
+
+    /// @note Implementation inspired by https://www.youtube.com/watch?v=beNDx5Cvt7M
     bool intersect(const Ray &ray, Intersection &its, Sampler &rng) const override {
-        float marchDistance = 0.0f;
-        int steps;
+        // Calculate distance at ray origin to determine if we're inside or outside the SDF object and how close we are to the border
+        const float originDist = static_cast<float>(this->estimateDistance(ray.origin.cast<autodiff::real>()));
 
-        float boundsT = intersectBounds(ray);
+        Ray marchRay = Ray(ray.origin, ray.direction, ray.depth);
 
-        // If the ray doesn't hit the bounding box, we know it doesn't hit the SDF
+        // If the ray depth is >= 1 or the distance is smaller than the minimal distance,
+        // we advance the ray origin a bit in the ray direction to avoid self intersections
+        if ((ray.depth >= 1) or (abs(originDist) < this->m_minDistance)) {
+            marchRay = Ray(ray(this->m_minDistance * ADVANCE_MULTIPLIER), ray.direction, ray.depth);
+        }
+
+        // Check, if the ray hits the bounding box of the SDF object and return false if not, since then, no intersection can occur
+        const float boundsT = intersectBounds(marchRay);
+
         if (boundsT == Infinity) {
             return false;
         }
 
-        for (steps = 0; steps < this->m_maxSteps; steps++) {
-            PointReal currPoint = ray(marchDistance).cast<autodiff::real>();
-            float distance = static_cast<float>(this->estimateDistance(currPoint));
+        // If the distance is negative enough, we're inside the SDF object.
+        // In this case, we negate every distance calculated, which inverts the SDF object
+        // and helps with finding the nearest border intersection from inside
+        float distMult = 1;
 
-            if (marchDistance < this->m_minDistance) {
-                marchDistance += abs(distance);
-                continue;
-            } else {
-                // Advance ray by calculated distance
-                marchDistance += distance;
-            }
+        float marchRayOriginDist = static_cast<float>(this->estimateDistance(marchRay.origin.cast<autodiff::real>()));
 
-            // If distance is too large, we know that we don't have a (new) intersection and can directly abort
-            if ((marchDistance > its.t) or (marchDistance >= Infinity) or (marchDistance < 0)) {
-                return false;
-            }
-
-            // If hitpoint would be behind the bounding box, we don't need to check further
-            // as the bounding box includes the object to render and thus the distance will only increase
-            if ((marchDistance > boundsT) and (!this->m_bounds.includes(ray(marchDistance)))) {
-                return false;
-            }
-
-            // If the distance is smaller than the threshold, we can count this as a hit on the object and return the intersection
-            if (distance < this->m_minDistance) {
-                break;
-            }
+        if (marchRayOriginDist < 0) {
+            distMult = -1;
         }
 
-        if ((steps >= this->m_maxSteps) or (marchDistance <= this->m_minDistance)) {
+        // Start the ray-marching loop
+        float marchedDist = 0.0f;
+        int step;
+
+        for (step = 0; step < this->m_maxSteps; step++) {
+            // Calculate point at current march distance
+            const PointReal marchPoint = marchRay(marchedDist).cast<autodiff::real>();
+            // Caulculate/Estimate distance of current point to the SDF object
+            const float distance = distMult * static_cast<float>(this->estimateDistance(marchPoint));
+
+            // Check conditions for no intersection
+            if ((its and (marchedDist > its.t))   // Hit would be obstructed by existing hit
+                or (marchedDist >= Infinity)      // Marching out of bounds
+                or ((marchedDist > boundsT) and (!this->m_bounds.includes(marchRay(marchedDist))))  // Hit would be outside of the bounding box of the SDF object
+                ) {
+                return false;
+            }
+
+            // If the absolute value of the distance is smaller than the minimal distance,
+            // we have found a hit and can break out of the loop to handle the rest
+            if (abs(distance) < this->m_minDistance) {
+                break;
+            }
+
+            marchedDist += distance;
+        }
+
+        // If the maximum amount of steps was reached, we didn't find an intersection, so return false
+        if (step >= this->m_maxSteps) {
             return false;
         }
 
-        its.t = marchDistance;
+        // Update intersection instance with updated values
+        its.t = marchedDist;
 
-        // Store fraction of steps to maximum steps such that it can be visualized with the "sdf" integrator
-        its.stats.sdfStepFraction = static_cast<float>(steps) / this->m_maxSteps;
+        /// Store fraction of steps to maximum steps such that it can be visualized with the "sdf" integrator
+        its.stats.sdfStepFraction = static_cast<float>(step) / this->m_maxSteps;
 
-        // We currently don't have any texture mapping, so the UV coordinates are constant
+        /// We currently don't have any texture mapping, so the UV coordinates are constant
         its.uv[0] = 0;
         its.uv[1] = 0;
 
-
-        PointReal hitPoint = ray(marchDistance).cast<autodiff::real>();
+        /// Calculate hit point and normal vector by using derivatives in each direction
+        PointReal hitPoint = marchRay(marchedDist).cast<autodiff::real>();
 
         its.position = hitPoint.cast<float>();
 
+        // For convenience :)
         using autodiff::wrt;
         using autodiff::at;
         using autodiff::derivative;
 
         its.frame.normal = Vector(
-            static_cast<float>(derivative([&](auto p){return this->estimateDistance(p);}, wrt(hitPoint.x()), at(hitPoint))),
-            static_cast<float>(derivative([&](auto p){return this->estimateDistance(p);}, wrt(hitPoint.y()), at(hitPoint))),
-            static_cast<float>(derivative([&](auto p){return this->estimateDistance(p);}, wrt(hitPoint.z()), at(hitPoint)))
+            static_cast<float>(derivative([&](auto p){return distMult * this->estimateDistance(p);}, wrt(hitPoint.x()), at(hitPoint))),
+            static_cast<float>(derivative([&](auto p){return distMult * this->estimateDistance(p);}, wrt(hitPoint.y()), at(hitPoint))),
+            static_cast<float>(derivative([&](auto p){return distMult * this->estimateDistance(p);}, wrt(hitPoint.z()), at(hitPoint)))
         ).normalized();
-
 
         its.frame.tangent = its.frame.normal.cross(Vector(1.0f, 0.0f, 0.0f));
 
