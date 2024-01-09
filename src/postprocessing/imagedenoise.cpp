@@ -1,3 +1,6 @@
+// Only add denoising post-processsing filter if OIDN is available
+#ifdef LW_WITH_OIDN
+
 #include <lightwave.hpp>
 #include <OpenImageDenoise/oidn.hpp>
 
@@ -73,3 +76,5 @@ public:
 } // namespace lightwave
 
 REGISTER_CLASS(ImageDenoise, "postprocess", "denoising")
+
+#endif
