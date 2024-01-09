@@ -72,6 +72,7 @@ public:
         Point position { 2 * rnd.x() - 1, 2 * rnd.y() - 1, 0 }; // stretch the random point to [-1,-1]..[+1,+1] and set z=0
 
         AreaSample sample;
+        sample.area = 2*2;
         populate(sample, position); // compute the shading frame, texture coordinates and area pdf (same as intersection)
         return sample;
     }

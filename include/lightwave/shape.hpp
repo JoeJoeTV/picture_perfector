@@ -19,6 +19,8 @@ namespace lightwave {
 
 /// @brief The result of sampling a random point on a shape's surface via @ref Shape::sampleArea .
 struct AreaSample : public SurfaceEvent {
+    float area = 1;
+
     /// @brief Creates an area sample with zero pdf to report that sampling has failed. 
     static AreaSample invalid() {
         AreaSample result;
