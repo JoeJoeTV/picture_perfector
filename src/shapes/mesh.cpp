@@ -108,17 +108,37 @@ protected:
 
         its.uv = interpolatedVertex.texcoords;
 
-        // Use one triangle edge as tangent and get bitangent from cross product
+        Vector Q1 = planeEdge1;
+        Vector Q2 = planeEdge2;
+        Vector2 tc1 = vertex2.texcoords - vertex1.texcoords;
+        Vector2 tc2 = vertex3.texcoords - vertex1.texcoords;
+
+        // Compute tangent/bitangent matrix using texture coordinates for each vertex
+        // See https://stackoverflow.com/questions/5255806/how-to-calculate-tangent-and-binormal/5257471#5257471
+        TMatrix<float, 2, 3> QM;
+        QM.setRow(0, Q1);
+        QM.setRow(1, Q2);
+
+        TMatrix<float, 2, 2> TM = TMatrix<float, 2, 2>{
+            tc2.y(), -tc1.y(),
+            -tc2.x(), tc1.x()
+        };
+
+        // Matrix containing the calculated tangent in the first row and the bitangent in the second row
+        TMatrix<float, 2, 3> TB = (1 / (tc1.x() * tc2.y() - tc2.x() * tc1.y())) * (TM * QM);
+
         if (this->m_smoothNormals) {
+            // Use interpolated normal combines with tangent calculates using texture coordinates,
+            // but re-calculate the tangent to make sure it's orthogonal
             its.frame.normal = interpolatedVertex.normal.normalized();
-            its.frame.tangent = interpolatedVertex.normal.cross(planeEdge1).normalized();
-            its.frame.bitangent = interpolatedVertex.normal.cross(its.frame.tangent).normalized();
+            its.frame.tangent = its.frame.normal.cross(TB.row(1)).normalized();
+            its.frame.bitangent = its.frame.normal.cross(its.frame.tangent).normalized();
         } else {
             const Vector normal = planeEdge1.cross(planeEdge2).normalized();
 
             its.frame.normal = normal;
-            its.frame.tangent = planeEdge1.normalized();
-            its.frame.bitangent = normal.cross(planeEdge1).normalized();
+            its.frame.tangent = TB.row(0).normalized();
+            its.frame.bitangent = its.frame.normal.cross(its.frame.tangent).normalized();
         }
 
         its.pdf = 0.0f;
