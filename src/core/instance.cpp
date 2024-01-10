@@ -14,17 +14,25 @@ void Instance::transformFrame(SurfaceEvent &surf) const {
 
     surf.position = this->m_transform->apply(surf.position);
 
-    // Keep tangent direction, transfrom and normalize it
-    surf.frame.tangent = this->m_transform->apply(surf.frame.tangent).normalized();
-    surf.frame.bitangent = this->m_transform->apply(surf.frame.bitangent).normalized();
-
-    if (this->m_flipNormal) {
-        surf.frame.bitangent = -surf.frame.bitangent;
+    // Apply normal map if requested
+    if (this->m_normal != nullptr) {
+        // Read normal vector from normal map texture
+        const Color nc = this->m_normal->evaluate(surf.uv);
+        // Map x,y and z values into [-1,1]
+        const Vector n = Vector(
+            2.0f * nc.r() - 1.0f,
+            2.0f * nc.g() - 1.0f,
+            2.0f * nc.b() - 1.0f
+        ).normalized();
+        // Go from shading space to object space
+        surf.frame.normal = surf.frame.toWorld(n).normalized();
     }
 
-    surf.frame.normal = surf.frame.tangent.cross(surf.frame.bitangent).normalized();
+    // Transform normal using transpose of inverse to world space
+    surf.frame.normal = this->m_transform->applyNormal(surf.frame.normal);
 
-    surf.frame.bitangent = surf.frame.normal.cross(surf.frame.tangent).normalized();
+    // Build orthonormal basis using default constructor, which is good enough for now
+    surf.frame = Frame(surf.frame.normal);
 }
 
 bool Instance::intersect(const Ray &worldRay, Intersection &its, Sampler &rng) const {
@@ -47,7 +55,7 @@ bool Instance::intersect(const Ray &worldRay, Intersection &its, Sampler &rng) c
     
     // If intersection object contains previous hit, re-calculate t in local space,
     // so that comparison in shape intersect methods works as expected
-    if (its.instance != nullptr) {
+    if (its) {
         its.t = (localRay.origin - this->m_transform->inverse(its.position)).length();
     }
 
