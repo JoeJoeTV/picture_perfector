@@ -5,19 +5,6 @@
 
 namespace lightwave {
 
-/// @brief Creates a transform that rotates @param a such that it the result is @param b
-Transform getRotationTransform(const Vector &a, const Vector &b) {
-    const Vector ab_cross = a.cross(b).normalized();
-    const float ab = a.dot(b);
-    const double angle = acos(ab);
-
-    Transform T;
-
-    T.rotate(ab_cross, angle);
-
-    return T;
-}
-
 void Instance::transformFrame(SurfaceEvent &surf) const {
     // hints:
     // * transform the hitpoint and frame here
