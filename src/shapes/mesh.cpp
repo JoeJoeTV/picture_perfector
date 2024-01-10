@@ -131,7 +131,7 @@ protected:
             // Use interpolated normal combines with tangent calculates using texture coordinates,
             // but re-calculate the tangent to make sure it's orthogonal
             its.frame.normal = interpolatedVertex.normal.normalized();
-            its.frame.tangent = its.frame.normal.cross(TB.row(1)).normalized();
+            its.frame.tangent = TB.row(1).cross(its.frame.normal).normalized();
             its.frame.bitangent = its.frame.normal.cross(its.frame.tangent).normalized();
         } else {
             const Vector normal = planeEdge1.cross(planeEdge2).normalized();
