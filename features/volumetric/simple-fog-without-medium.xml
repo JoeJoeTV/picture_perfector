@@ -1,5 +1,5 @@
 
-<integrator type="volumePathtracer" depth="15">
+<integrator type="volumePathtracer" depth="8">
     <scene id="scene">
         <camera type="perspective" id="camera">
             <integer name="width" value="400"/>
@@ -12,6 +12,8 @@
                 <translate z="-4"/>
             </transform>
         </camera>
+
+        <light type="point" position="5,5,0" power="5" />
 
         <instance id="back">
             <shape type="rectangle"/>
@@ -26,14 +28,16 @@
 
         <instance>
             <shape type="sphere"/>
-            <medium type="homogeneous" density="0.1" color="1,1,0"/>
+            <bsdf type="diffuse">
+                <texture name="albedo" type="constant" value="0.25, 0.1, 0.1"/>
+            </bsdf>
             <transform>
                 <scale value="0.5"/>
                 <translate y="0" z="0" x="0"/>
             </transform>
         </instance>
     </scene>
-    <image id="simple-fog"/> 
+    <image id="simple-fog-without-medium"/> 
     <sampler type="independent" count="128"/>
 </integrator>
 

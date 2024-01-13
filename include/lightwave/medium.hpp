@@ -22,7 +22,9 @@ public:
      * @param ray The ray for which to compute the trancmittance in local coordinates.
      * @param A random number generator used to steer sampling decisions.
      */
-    virtual Color Tr(const Ray &ray, Sampler &rng) const = 0;
+    virtual float Tr(const Ray &ray, const Intersection its, Sampler &rng) const = 0;
+
+    virtual Color getColor() const = 0;
 };
 
 }

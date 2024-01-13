@@ -146,7 +146,10 @@ Color Intersection::evaluateEmission() const {
 }
 
 BsdfSample Intersection::sampleBsdf(Sampler &rng) const {
-    if (!instance->bsdf()) return BsdfSample::invalid();
+    if (!instance->bsdf()) return{
+            .wi     = -1*wo,
+            .weight = Color(1),
+        };
     assert_normalized(wo, {});
     auto bsdfSample = instance->bsdf()->sample(uv, frame.toLocal(wo), rng);
     if (bsdfSample.isInvalid()) return bsdfSample;

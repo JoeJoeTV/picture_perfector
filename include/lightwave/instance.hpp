@@ -26,6 +26,7 @@ class Instance : public Shape {
     /// @brief The shape wrapped by the instance.
     ref<Shape> m_shape;
     /// @brief The material that the shape should be rendered with (can be null for non-reflecting objects).
+    // nullBSDF means we just pass the ray through. This is nice for mediums
     ref<Bsdf> m_bsdf;
     /// @brief The distribution of light the shape should emit (can be null for non-emissive objects).
     ref<Emission> m_emission;
@@ -63,6 +64,8 @@ public:
     Emission *emission() const { return m_emission.get(); }
     /// @brief Returns the light object that contains this instance (or null if this instance is not part of any area light).
     Light *light() const { return m_light; }
+    /// @brief Returns the medium inside this instance (can be null if there is a vakuum inside).
+    Medium *medium() const { return m_medium.get(); }
 
     /// @brief Returns whether this instance has been added to the scene, i.e., could be hit by ray tracing.
     bool isVisible() const { return m_visible; }
