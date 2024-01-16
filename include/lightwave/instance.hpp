@@ -8,6 +8,8 @@
 #include <lightwave/core.hpp>
 #include <lightwave/shape.hpp>
 
+#include <misc/portal_link.hpp>
+
 namespace lightwave {
 
 /**
@@ -37,6 +39,9 @@ class Instance : public Shape {
 
     /// @brief The texture representing the normal map for the object instance
     ref<Texture> m_normal;
+
+    /// @brief Potential Portal Link, if instance is used as a portal shape object
+    ref<PortalLink> m_link;
     
     /// @brief Transforms the frame from object coordinates to world coordinates.
     inline void transformFrame(SurfaceEvent &surf) const;
@@ -49,11 +54,17 @@ public:
         m_emission = properties.getOptionalChild<Emission>();
         m_transform = properties.getOptionalChild<Transform>();
         m_normal = properties.get<Texture>("normal", nullptr);
+        m_link = properties.get<PortalLink>("link", nullptr);
         m_visible = false;
         
         m_flipNormal = false;
         if (m_transform && m_transform->determinant() < 0) {
             m_flipNormal = !m_flipNormal;
+        }
+
+        // If a portal link is specified, try to register
+        if (m_link != nullptr) {
+            m_link->registerPortal(std::make_shared<Instance>(*this), m_transform);
         }
     }
 
