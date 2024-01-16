@@ -2,6 +2,10 @@
 
 #pragma once
 
+const std::vector<std::string> SUPPORTED_SHAPE_IDS = {
+    "Rectangle"
+};
+
 namespace lightwave {
 
 typedef struct PortalData {

@@ -64,7 +64,16 @@ public:
 
         // If a portal link is specified, try to register
         if (m_link != nullptr) {
-            m_link->registerPortal(std::make_shared<Instance>(*this), m_transform);
+            // Get shape identifier from toString function
+            const std::string shapeString = m_shape->toString();
+            const std::string shapeID = shapeString.substr(0, shapeString.find("["));
+
+            // Check if shape is supported as a portal surface
+            if (std::find(SUPPORTED_SHAPE_IDS.begin(), SUPPORTED_SHAPE_IDS.end(), shapeID) != SUPPORTED_SHAPE_IDS.end()) {
+                m_link->registerPortal(std::make_shared<Instance>(*this), m_transform);
+            } else {
+                lightwave_throw("Shape is not supported when used as a portal surface: %s", shapeString);
+            }
         }
     }
 
