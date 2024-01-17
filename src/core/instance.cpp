@@ -40,6 +40,13 @@ bool Instance::intersect(const Ray &worldRay, Intersection &its, Sampler &rng) c
         // fast path, if no transform is needed
         Ray localRay = worldRay;
         if (m_shape->intersect(localRay, its, rng)) {
+            // If the instance is a portal, forward the ray and exit
+            if (this->m_link) {
+                its.forward = true;
+                its.forwardRay = this->m_link->getTeleportedRay(std::make_shared<Instance>(*this), localRay);
+                return true;
+            }
+
             its.instance = this;
 
             return true;
@@ -66,6 +73,13 @@ bool Instance::intersect(const Ray &worldRay, Intersection &its, Sampler &rng) c
     const bool wasIntersected = m_shape->intersect(localRay, its, rng);
     if (wasIntersected) {
         // hint: how does its.t need to change?
+
+        // If the instance is a portal, forward the ray and exit
+        if (this->m_link) {
+            its.forward = true;
+            its.forwardRay = this->m_link->getTeleportedRay(std::make_shared<Instance>(*this), localRay);
+            return true;
+        }
         
         its.instance = this;
         transformFrame(its);

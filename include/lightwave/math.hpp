@@ -746,6 +746,11 @@ struct Intersection : public SurfaceEvent {
     /// @brief The intersection distance, which can also be used to specify a maximum distance when querying intersections.
     float t;
 
+    /// @brief Wether the ray needs to be forwarded from a new origin and direction
+    bool forward = false;
+    /// @brief The ray that the current ray should be forwarded to
+    Ray forwardRay;
+
     /// @brief Statistics recorded while traversing acceleration structures.
     struct {
         /// @brief The number of BVH nodes that have been tested for intersection.

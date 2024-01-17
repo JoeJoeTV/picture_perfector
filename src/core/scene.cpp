@@ -34,8 +34,20 @@ std::string Scene::toString() const {
 }
 
 Intersection Scene::intersect(const Ray &ray, Sampler &rng) const {
-    Intersection its(-ray.direction);
-    m_shape->intersect(ray, its, rng);
+    Ray currentRay = ray;
+    Intersection its(-currentRay.direction);
+
+    do {
+        // If the previous intersection requested to forward the ray,
+        // then we set that as the new ray and intersect again
+        if (its.forward) {
+            currentRay = its.forwardRay;
+            its = Intersection(-currentRay.direction);
+        }
+
+        m_shape->intersect(currentRay, its, rng);
+    } while (its.forward);
+
     return its;
 }
 
