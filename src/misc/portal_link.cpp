@@ -14,8 +14,31 @@ void PortalLink::registerPortal(const ref<Instance> portal, const ref<Transform>
 }
 
 Ray PortalLink::getTeleportedRay(const ref<Instance> portal, const Ray &incomingRay) {
-    //TODO: Implement
-    NOT_IMPLEMENTED
+    if (portal == this->m_firstPortal.instance) {
+        // The ray goes into the first portal and should come out of the second portal
+        if (this->m_secondPortal.transform) {
+            return Ray(
+                this->m_secondPortal.transform->apply(incomingRay.origin),
+                this->m_secondPortal.transform->apply(incomingRay.direction).normalized(),
+                incomingRay.depth + 1
+            );
+        } else {
+            return Ray(incomingRay.origin, incomingRay.direction, incomingRay.depth + 1);
+        }
+    } else if (portal == this->m_secondPortal.instance) {
+        // The ray goes into the second portal and should come out of the first portal
+        if (this->m_firstPortal.transform) {
+            return Ray(
+                this->m_firstPortal.transform->apply(incomingRay.origin),
+                this->m_firstPortal.transform->apply(incomingRay.direction).normalized(),
+                incomingRay.depth + 1
+            );
+        } else {
+            return Ray(incomingRay.origin, incomingRay.direction, incomingRay.depth + 1);
+        }
+    } else {
+        lightwave_throw("getTeleportedRay called using instance not registered as portal: %s", portal);
+    }
 }
     
 }
