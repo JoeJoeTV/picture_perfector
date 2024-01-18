@@ -40,7 +40,7 @@ public:
     Camera *camera() const { return m_camera.get(); }
     
     /// @brief Finds the closest intersection of the scene for a given ray.
-    Intersection intersect(const Ray &ray, Sampler &rng) const;
+    Intersection intersect(const Ray &ray, Sampler &rng, const int maxForwards = std::numeric_limits<int>::max()) const;
     /// @brief Reports whether any intersection up to a given maximal distance exists (used for testing visibility of light sources).
     bool intersect(const Ray &ray, float tMax, Sampler &rng) const;
     /// @brief Evaluates the background illumination for a given direction pointing away from the scene.

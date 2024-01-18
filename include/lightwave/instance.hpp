@@ -46,6 +46,9 @@ class Instance : public Shape {
     /// @brief Transforms the frame from object coordinates to world coordinates.
     inline void transformFrame(SurfaceEvent &surf) const;
 
+    /// @brief Handles the usage of the portal link, if present 
+    inline bool handlePortalLink(const Intersection &oldIts, Intersection &its, const Ray &ray) const;
+
 public:
     Instance(const Properties &properties) 
         : m_light(nullptr) {
@@ -63,14 +66,14 @@ public:
         }
 
         // If a portal link is specified, try to register
-        if (m_link != nullptr) {
+        if (m_link) {
             // Get shape identifier from toString function
             const std::string shapeString = m_shape->toString();
             const std::string shapeID = shapeString.substr(0, shapeString.find("["));
 
             // Check if shape is supported as a portal surface
             if (std::find(SUPPORTED_SHAPE_IDS.begin(), SUPPORTED_SHAPE_IDS.end(), shapeID) != SUPPORTED_SHAPE_IDS.end()) {
-                m_link->registerPortal(std::make_shared<Instance>(*this), m_transform);
+                m_link->registerPortal(this, m_transform);
             } else {
                 lightwave_throw("Shape is not supported when used as a portal surface: %s", shapeString);
             }

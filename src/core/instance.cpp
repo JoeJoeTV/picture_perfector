@@ -35,19 +35,33 @@ void Instance::transformFrame(SurfaceEvent &surf) const {
     surf.frame = Frame(surf.frame.normal);
 }
 
+bool Instance::handlePortalLink(const Intersection &oldIts, Intersection &its, const Ray &ray) const {
+    if (this->m_link->shouldTeleport(this, its)) {
+        its.forward = true;
+        its.forwardRay = this->m_link->getTeleportedRay(this, ray, its);
+        return true;
+    } else {
+        its = oldIts;
+        return false;
+    }
+}
+
 bool Instance::intersect(const Ray &worldRay, Intersection &its, Sampler &rng) const {
+    Intersection oldIts = its;
+
     if (!m_transform) {
         // fast path, if no transform is needed
         Ray localRay = worldRay;
         if (m_shape->intersect(localRay, its, rng)) {
+            its.instance = this;
+
             // If the instance is a portal, forward the ray and exit
             if (this->m_link) {
-                its.forward = true;
-                its.forwardRay = this->m_link->getTeleportedRay(std::make_shared<Instance>(*this), localRay);
-                return true;
+                const bool ret = this->handlePortalLink(oldIts, its, localRay);
+                if (ret or !PORTALS_DEBUG) {
+                    return ret;
+                }
             }
-
-            its.instance = this;
 
             return true;
         } else {
@@ -74,14 +88,16 @@ bool Instance::intersect(const Ray &worldRay, Intersection &its, Sampler &rng) c
     if (wasIntersected) {
         // hint: how does its.t need to change?
 
+        its.instance = this;
+
         // If the instance is a portal, forward the ray and exit
         if (this->m_link) {
-            its.forward = true;
-            its.forwardRay = this->m_link->getTeleportedRay(std::make_shared<Instance>(*this), localRay);
-            return true;
+            const bool ret = this->handlePortalLink(oldIts, its, localRay);
+            if (ret or !PORTALS_DEBUG) {
+                return ret;
+            }
         }
         
-        its.instance = this;
         transformFrame(its);
 
         // Calculate new t in world space

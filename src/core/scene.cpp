@@ -33,9 +33,12 @@ std::string Scene::toString() const {
     );
 }
 
-Intersection Scene::intersect(const Ray &ray, Sampler &rng) const {
+Intersection Scene::intersect(const Ray &ray, Sampler &rng, const int maxForwards) const {
     Ray currentRay = ray;
     Intersection its(-currentRay.direction);
+
+    // How many times has the ray been forwarded
+    int fwCount = 0;
 
     do {
         // If the previous intersection requested to forward the ray,
@@ -46,7 +49,9 @@ Intersection Scene::intersect(const Ray &ray, Sampler &rng) const {
         }
 
         m_shape->intersect(currentRay, its, rng);
-    } while (its.forward);
+
+        fwCount++;
+    } while (its.forward and (fwCount < maxForwards));
 
     return its;
 }

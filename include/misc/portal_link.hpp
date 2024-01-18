@@ -2,6 +2,8 @@
 
 #pragma once
 
+#define PORTALS_DEBUG true
+
 const std::vector<std::string> SUPPORTED_SHAPE_IDS = {
     "Rectangle"
 };
@@ -9,7 +11,7 @@ const std::vector<std::string> SUPPORTED_SHAPE_IDS = {
 namespace lightwave {
 
 typedef struct PortalData {
-    ref<Instance> instance = nullptr;
+    const Instance* instance = nullptr;
     ref<Transform> transform = nullptr;
 } PortalData;
 
@@ -26,15 +28,21 @@ public:
     }
 
     /// @brief Registers an instance as either the first or second portal
-    /// @param portal The instance representing the portal
-    /// @param transform The transform from local to world space
-    void registerPortal(const ref<Instance> portal, const ref<Transform> transform);
+    /// @param portal A pointer to the instance representing the portal
+    /// @param transform A pointer to the transform from local to world space
+    void registerPortal(const Instance* portal, const ref<Transform> transform);
 
     /// @brief Given a portal instance and an incoming ray, returns the ray that was "teleported" to the other portal
-    /// @param portal The instance representing the portal
-    /// @param incomingRay The ray that hit the portal surface
+    /// @param portal A pointer to the instance representing the portal
+    /// @param incomingRay A pointer to the ray that hit the portal surface
     /// @return The "teleported" Ray
-    Ray getTeleportedRay(const ref<Instance> portal, const Ray &incomingRay);
+    Ray getTeleportedRay(const Instance* portal, const Ray &incomingRay, const Intersection &its);
+
+    /// @brief Checks wether the ray should be teleported or let through
+    /// @param portal A pointer to the instance representing the portal
+    /// @param hit The intersection on the portal surface
+    /// @return Wether the ray should be teleported or let through
+    bool shouldTeleport(const Instance* portal, const Intersection &hit);
 
     std::string toString() const override {
         return tfm::format(
