@@ -32,12 +32,12 @@ class Instance : public Shape {
     ref<Emission> m_emission;
     /// @brief The transformation applied to the shape, leading from object coordinates to world coordinates.
     ref<Transform> m_transform;
+    /// @brief The medium inside of this Instance
+    ref<Medium> m_medium;
     /// @brief Flip the normal direction, used to correct for the change of handedness in case the transformation mirrors the object.
     bool m_flipNormal;
     /// @brief Tracks whether this instance has been added to the scene, i.e., could be hit by ray tracing.
     bool m_visible;
-    /// @brief The medium inside of this Instance
-    ref<Medium> m_medium;
     
     /// @brief Transforms the frame from object coordinates to world coordinates.
     inline void transformFrame(SurfaceEvent &surf) const;
@@ -48,8 +48,8 @@ public:
         m_shape = properties.getChild<Shape>();
         m_bsdf = properties.getOptionalChild<Bsdf>();
         m_emission = properties.getOptionalChild<Emission>();
-        m_transform = properties.getOptionalChild<Transform>();
         m_medium = properties.getOptionalChild<Medium>();
+        m_transform = properties.getOptionalChild<Transform>();
         m_visible = false;
         
         m_flipNormal = false;
