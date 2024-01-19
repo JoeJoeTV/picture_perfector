@@ -4,6 +4,33 @@ namespace lightwave {
 class Volumepathtracer : public SamplingIntegrator {
 
     int m_depth;
+
+    // intersect but ignor volums. Account for them with Tr() and change light contribution
+    // returns a weight that is one of the light is hit right away
+    // returns 0 if the light is blocked
+    // returns any value between 0 and 1 if there is a volume
+    float intersectTr(const Ray &ray, DirectLightSample dls, Sampler &rng) {
+        float weight = 1;
+        Ray currentRay = ray;
+        float distance = dls.distance;
+        while (true) {
+            // Check if there is something between light and hitpoit
+            const Intersection its_shadow = this->m_scene->intersect(currentRay, rng);
+
+            if (!its_shadow || (its_shadow.t > distance)) {
+                return weight;
+            }
+            
+            if (its_shadow.instance->bsdf() != nullptr) {
+                return 0;
+            }
+
+            weight *= its_shadow.instance->medium()->Tr(currentRay, its_shadow.t, rng);
+
+            distance -= (its_shadow.position - currentRay.origin).length();
+            currentRay = Ray(its_shadow.position, currentRay.direction);
+        }
+    }
     
     Color calculateLight(Intersection &its, Sampler &rng) {
         if (not this->m_scene->hasLights()) {
@@ -21,15 +48,20 @@ class Volumepathtracer : public SamplingIntegrator {
         const DirectLightSample dls = ls.light->sampleDirect(its.position, rng);
 
         // Check if light source is blocked for intersection
-        const Intersection its_shadow = this->m_scene->intersect(Ray(its.position, dls.wi), rng);
+        /*const Intersection its_shadow = this->m_scene->intersect(Ray(its.position, dls.wi), rng);
 
         if (its_shadow and (its_shadow.t < dls.distance)) {
             return Color(0.0f);
-        }
+        }*/
+
+        /*if (this->intersectTr(Ray(its.position, dls.wi), dls, rng)) {
+            return Color(0.0f);
+        }*/
+        float traceWeight = this->intersectTr(Ray(its.position, dls.wi), dls, rng);
 
         const BsdfEval bsdf_sample = its.evaluateBsdf(dls.wi);
 
-        Color contribution = (dls.weight * bsdf_sample.value) / ls.probability;
+        Color contribution = (traceWeight * dls.weight * bsdf_sample.value) / ls.probability;
 
         return contribution;
     }
@@ -56,60 +88,93 @@ public:
         Medium* currentMedium = nullptr;
 
         for (int i = 0; i < m_depth; i++) {
-            // sample medium to see if we intersect it or pass through to the next surface
-            // surface is also possibly to be a new medium or exciting it 
-            // we check this by getting a t and seeing wether an intersection is closer
-            /*if (currentMedium != nullptr) {
-                *currentMedium.sample();
-            }*/ // sampeling is only needed if we need to explicitly model interactions aka heteroginious
-
             // intersect the ray with the scene
             Intersection its = m_scene->intersect(currentRay, rng);
-            // update medium if neccesary
 
-            // after hitting a surface we evaluate the medium if it exists
-            float mediumTValue = 1.f; 
-            Color mediumAbsorption = Color(1.f);
-            Color mediumScatter = Color(0.f);
+            // sample the active medium
+            float tScatter = Infinity;
+            float pOfSampleingMedium = 0;
             if (currentMedium != nullptr) {
-                mediumTValue = (*currentMedium).Tr(currentRay, its, rng);
-                mediumAbsorption *= mediumTValue;
-                mediumScatter = currentMedium->getColor() * (1-mediumTValue);
+                tScatter = currentMedium->sampleHitDistance(currentRay, rng);
+                pOfSampleingMedium =  clamp((*currentMedium).probabilityOfSampelingBeforeT(its.t), 0.f, 1.f);
             }
 
             // if no intersection occured
             if (!its) {
+                // There is also no medium change, so if there is a medium the light contribution will be zero
+                // Only works if thee is no emision from the medium
+                if (currentMedium != nullptr) {
+                    break;
+                }
+
                 Color backgroundLight = (m_scene->evaluateBackground(currentRay.direction)).value;
-                accumulatedLight += accumulatedWeight * backgroundLight * (mediumAbsorption + mediumScatter);
+                accumulatedLight += accumulatedWeight * backgroundLight;
                 break;
             }
-            
-            // sample the bsdf for a new bounce and weight
-            BsdfSample sample = its.sampleBsdf(rng);
 
-            // check if we enter the instance or not
-            // do this by checking wi with and the normal
-            if (Frame::cosTheta(its.frame.toLocal(sample.wi)) < 0) {
-                currentMedium = its.instance->medium();
+            // either evaluate medium or surface interaction
+            if (tScatter < its.t) {
+                // Medium scatter event
+
+                float mediumTValue = (*currentMedium).Tr(currentRay, tScatter, rng);
+
+                Intersection itsMedium = Intersection(its.wo, tScatter);
+                itsMedium.position = currentRay(tScatter);
+                // next event estimation to evaluate light
+                Color lightContribution = calculateLight(itsMedium, rng);
+
+                if (i == m_depth-1) {
+                    lightContribution = Color(0.f);
+                }
+
+                float probabilityOfThisScatter = (*currentMedium).probabilityOfSampelingThisPoint(tScatter);
+
+                accumulatedWeight *= mediumTValue * currentMedium->getColor() / (probabilityOfThisScatter*Pi);
+                accumulatedLight +=  accumulatedWeight * lightContribution;
+                
+                // sample a direction that we scater in
+                Vector wi = currentMedium->samplePhase(itsMedium, rng);
+
+                // new ray
+                currentRay = Ray(itsMedium.position, wi.normalized(), i+1);
+            } else {
+                // Surface scatter event
+
+                // sample the bsdf for a new bounce and weight
+                BsdfSample sample = its.sampleBsdf(rng);
+
+                // check if we enter the instance or leave or neither
+                if (Frame::cosTheta(its.frame.toLocal(its.wo)) < 0 &&
+                    Frame::cosTheta(its.frame.toLocal(sample.wi)) > 0) {
+                    // leave the shape
+                    currentMedium = nullptr;
+                } 
+                if (Frame::cosTheta(its.frame.toLocal(its.wo)) > 0 &&
+                    Frame::cosTheta(its.frame.toLocal(sample.wi)) < 0) {
+                    // enter the shape
+                    currentMedium = its.instance->medium();
+                } 
+
+                // get emissions of intersection
+                Color emissions = its.evaluateEmission();
+
+                // next event estimation to evaluate light
+                Color lightContribution = Color(0);
+                if (its.instance->bsdf() != nullptr) {
+                    lightContribution = calculateLight(its, rng);
+                }
+
+                // update accumulated light and weigt
+                if (i == m_depth-1) {
+                    lightContribution = Color(0.f);
+                }
+                //std::cout << pOfSampleingMedium << std::endl;
+                accumulatedLight += accumulatedWeight * (emissions + lightContribution) / (1-pOfSampleingMedium);
+                accumulatedWeight *= sample.weight;
+                
+                // update variables for next iteration
+                currentRay = Ray(its.position, sample.wi.normalized(), i+1);
             }
-
-            // get emissions of intersection
-            Color emissions = its.evaluateEmission();
-
-            // next event estimation to evaluate light
-            // check if this workes with volumes properly
-            // might lead to issues because the shadow ray does not accound volums correctly 
-            Color lightContribution = calculateLight(its, rng);
-
-            // update accumulated light and weigt
-            if (i == m_depth-1) {
-                lightContribution = Color(0.f);
-            }
-            accumulatedLight += (mediumAbsorption+mediumScatter) * accumulatedWeight * (emissions + lightContribution);
-            accumulatedWeight *= sample.weight * mediumAbsorption;         
-
-            // update variables for next iteration
-            currentRay = Ray(its.position, sample.wi.normalized(), i+1);
         }  
 
         return accumulatedLight;

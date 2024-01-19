@@ -165,8 +165,12 @@ BsdfSample Intersection::sampleBsdf(Sampler &rng) const {
 }
 
 BsdfEval Intersection::evaluateBsdf(const Vector &wi) const {
-    if (!instance->bsdf())
-        return BsdfEval::invalid();
+    if (!instance) return {
+            .value = Color(1),
+        };
+    if (!instance->bsdf()) return{
+            .value = Color(1),
+        };
     return instance->bsdf()->evaluate(uv, frame.toLocal(wo), frame.toLocal(wi));
 }
 
