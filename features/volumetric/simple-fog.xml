@@ -1,5 +1,5 @@
 
-<integrator type="volumePathtracer" depth="15">
+<integrator type="volumePathtracer" depth="20">
     <scene id="scene">
         <camera type="perspective" id="camera">
             <integer name="width" value="400"/>
@@ -26,7 +26,7 @@
 
         <instance>
             <shape type="sphere"/>
-            <medium type="homogeneous" density="0.1" color="1,1,0"/>
+            <medium type="homogeneous" sigmaT="3" color="0"/>
             <transform>
                 <scale value="0.5"/>
                 <translate y="0" z="0" x="0"/>
@@ -34,6 +34,6 @@
         </instance>
     </scene>
     <image id="simple-fog"/> 
-    <sampler type="independent" count="128"/>
+    <sampler type="independent" count="800"/>
 </integrator>
 

@@ -1,5 +1,5 @@
 
-<integrator type="volumePathtracer" depth="10">
+<integrator type="volumePathtracer" depth="100">
     <scene id="scene">
         <camera type="perspective" id="camera">
             <integer name="width" value="400"/>
@@ -13,11 +13,11 @@
             </transform>
         </camera>
 
-        <light type="point" position="-5,-10,0" power="900" />
-        <light type="point" position="-5.1,-10.1,0" power="900" />
-        <light type="point" position="-4.9,-9.9,0" power="900" />
-        <light type="point" position="-4.9,-10,0" power="900" />
-        <light type="point" position="-5,-9.9,0" power="900" />
+        <light type="point" position="-5,-10,0" power="200" />
+        <light type="point" position="-5.1,-10.1,0" power="200" />
+        <light type="point" position="-4.9,-9.9,0" power="200" />
+        <light type="point" position="-4.9,-10,0" power="200" />
+        <light type="point" position="-5,-9.9,0" power="200" />
 
         <instance>
             <shape type="rectangle"/>
@@ -56,14 +56,14 @@
 
         <instance>
             <shape type="sphere"/>
-            <medium type="homogeneous" density="0.4" color="0"/>
+            <medium type="homogeneous" sigmaT="0.5" color="1,0.55,0.8"/>
             <transform>
-                <scale value="2"/>
-                <translate y="-0.8" z="0" x="-0.8"/>
+                <scale value="1"/>
+                <translate y="0" z="0" x="-0.2"/>
             </transform>
         </instance>
     </scene>
-    <image id="fog-shadow"/> 
-    <sampler type="independent" count="128"/>
+    <image id="volumetric-shadow"/> 
+    <sampler type="independent" count="500"/>
 </integrator>
 
