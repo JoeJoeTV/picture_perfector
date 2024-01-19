@@ -1,0 +1,141 @@
+<scene id="scene">
+  <camera type="perspective">
+    <integer name="width" value="1024"/>
+    <integer name="height" value="1024"/>
+    <float name="fov" value="39.598"/>
+    <string name="fovAxis" value="y"/>
+    <transform>
+      <matrix value="0.73501,0.16909,-0.65663,9.9089,  0.67806,-0.1833,0.71179,-10.756,  1.216e-08,-0.96841,-0.24938,1.8783,  0,0,0,1"/>
+    </transform>
+  </camera>
+  <light type="point" position="-3.3824,-4.2738,4.0071" power="1500,1500,1500"/>
+  <instance>
+    <bsdf type="principled">
+      <texture name="baseColor" type="image" filename="textures/grass_color.jpg"/>
+      <texture name="roughness" type="image" filename="textures/grass_roughness.jpg" linear="true"/>
+      <texture name="metallic" type="constant" value="0"/>
+      <texture name="specular" type="constant" value="0.5"/>
+    </bsdf>
+    <texture name="normal" type="image" filename="textures/grass_normal.jpg" linear="true"/>
+    <shape type="mesh" filename="meshes/Plane.ply"/>
+    <transform>
+      <matrix value="10,0,0,0,  0,10,0,0,  0,0,1,0,  0,0,0,1"/>
+    </transform>
+  </instance>
+  <light type="directional" direction="0,0,1" intensity="1,1,1"/>
+  <instance>
+    <bsdf type="principled">
+      <texture name="baseColor" type="image" filename="textures/brickwall_color.jpg"/>
+      <texture name="roughness" type="constant" value="0.5"/>
+      <texture name="metallic" type="constant" value="0"/>
+      <texture name="specular" type="constant" value="0.5"/>
+    </bsdf>
+    <texture name="normal" type="image" filename="textures/brickwall_normal.jpg"/>
+    <shape type="mesh" filename="meshes/Cube.ply"/>
+    <transform>
+      <matrix value="1,0,0,1.6136,  0,-4.3711e-08,1,-1.6797,  0,-1,-4.3711e-08,1,  0,0,0,1"/>
+    </transform>
+  </instance>
+  <instance>
+    <bsdf type="principled">
+      <texture name="baseColor" type="image" filename="textures/brickwall_color.jpg"/>
+      <texture name="roughness" type="constant" value="0.5"/>
+      <texture name="metallic" type="constant" value="0"/>
+      <texture name="specular" type="constant" value="0.5"/>
+    </bsdf>
+    <texture name="normal" type="image" filename="textures/brickwall_normal.jpg"/>
+    <shape type="mesh" filename="meshes/Cube.ply"/>
+    <transform>
+      <matrix value="1,0,0,3.6136,  0,-4.3711e-08,1,-1.6797,  0,-1,-4.3711e-08,1,  0,0,0,1"/>
+    </transform>
+  </instance>
+  <instance>
+    <bsdf type="principled">
+      <texture name="baseColor" type="image" filename="textures/brickwall_color.jpg"/>
+      <texture name="roughness" type="constant" value="0.5"/>
+      <texture name="metallic" type="constant" value="0"/>
+      <texture name="specular" type="constant" value="0.5"/>
+    </bsdf>
+    <texture name="normal" type="image" filename="textures/brickwall_normal.jpg"/>
+    <shape type="mesh" filename="meshes/Cube.ply"/>
+    <transform>
+      <matrix value="1,0,0,7.6136,  0,-4.3711e-08,1,-1.6797,  0,-1,-4.3711e-08,1,  0,0,0,1"/>
+    </transform>
+  </instance>
+  <instance>
+    <bsdf type="principled">
+      <texture name="baseColor" type="image" filename="textures/brickwall_color.jpg"/>
+      <texture name="roughness" type="constant" value="0.5"/>
+      <texture name="metallic" type="constant" value="0"/>
+      <texture name="specular" type="constant" value="0.5"/>
+    </bsdf>
+    <texture name="normal" type="image" filename="textures/brickwall_normal.jpg"/>
+    <shape type="mesh" filename="meshes/Cube.ply"/>
+    <transform>
+      <matrix value="1,0,0,5.6136,  0,-4.3711e-08,1,-1.6797,  0,-1,-4.3711e-08,1,  0,0,0,1"/>
+    </transform>
+  </instance>
+  <instance>
+    <bsdf type="principled">
+      <texture name="baseColor" type="image" filename="textures/brickwall_color.jpg"/>
+      <texture name="roughness" type="constant" value="0.5"/>
+      <texture name="metallic" type="constant" value="0"/>
+      <texture name="specular" type="constant" value="0.5"/>
+    </bsdf>
+    <texture name="normal" type="image" filename="textures/brickwall_normal.jpg"/>
+    <shape type="mesh" filename="meshes/Cube.ply"/>
+    <transform>
+      <matrix value="1,0,0,5.6136,  0,-4.3711e-08,1,-1.6797,  0,-1,-4.3711e-08,3,  0,0,0,1"/>
+    </transform>
+  </instance>
+  <instance>
+    <bsdf type="principled">
+      <texture name="baseColor" type="image" filename="textures/brickwall_color.jpg"/>
+      <texture name="roughness" type="constant" value="0.5"/>
+      <texture name="metallic" type="constant" value="0"/>
+      <texture name="specular" type="constant" value="0.5"/>
+    </bsdf>
+    <texture name="normal" type="image" filename="textures/brickwall_normal.jpg"/>
+    <shape type="mesh" filename="meshes/Cube.ply"/>
+    <transform>
+      <matrix value="1,0,0,7.6136,  0,-4.3711e-08,1,-1.6797,  0,-1,-4.3711e-08,3,  0,0,0,1"/>
+    </transform>
+  </instance>
+  <instance>
+    <bsdf type="principled">
+      <texture name="baseColor" type="image" filename="textures/brickwall_color.jpg"/>
+      <texture name="roughness" type="constant" value="0.5"/>
+      <texture name="metallic" type="constant" value="0"/>
+      <texture name="specular" type="constant" value="0.5"/>
+    </bsdf>
+    <texture name="normal" type="image" filename="textures/brickwall_normal.jpg"/>
+    <shape type="mesh" filename="meshes/Cube.ply"/>
+    <transform>
+      <matrix value="1,0,0,3.6136,  0,-4.3711e-08,1,-1.6797,  0,-1,-4.3711e-08,3,  0,0,0,1"/>
+    </transform>
+  </instance>
+  <instance>
+    <bsdf type="principled">
+      <texture name="baseColor" type="image" filename="textures/brickwall_color.jpg"/>
+      <texture name="roughness" type="constant" value="0.5"/>
+      <texture name="metallic" type="constant" value="0"/>
+      <texture name="specular" type="constant" value="0.5"/>
+    </bsdf>
+    <texture name="normal" type="image" filename="textures/brickwall_normal.jpg"/>
+    <shape type="mesh" filename="meshes/Cube.ply"/>
+    <transform>
+      <matrix value="1,0,0,1.6136,  0,-4.3711e-08,1,-1.6797,  0,-1,-4.3711e-08,3,  0,0,0,1"/>
+    </transform>
+  </instance>
+  <light type="envmap">
+    <texture type="image" filename="textures/night_sky_with_mountians.exr" exposure="0.5" border="clamp" linear="true"/>
+    <transform>
+      <matrix value="1,0,0,0,  0,0,1,0,  0,-1,0,0,  0,0,0,1"/>
+    </transform>
+  </light>
+</scene>
+<integrator type="pathtracer" depth="12" nee="true" mis="true">
+  <ref id="scene"/>
+  <image id="another_brick_in_the_wall"/>
+  <sampler type="independent" count="256"/>
+</integrator>

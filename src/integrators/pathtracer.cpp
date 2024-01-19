@@ -21,9 +21,7 @@ class Pathtracer : public SamplingIntegrator {
         const DirectLightSample dls = ls.light->sampleDirect(its.position, rng);
 
         // Check if light source is blocked for intersection
-        const Intersection its_shadow = this->m_scene->intersect(Ray(its.position, dls.wi), rng);
-
-        if (its_shadow and (its_shadow.t < dls.distance)) {
+        if (this->m_scene->intersect(Ray(its.position, dls.wi), dls.distance, rng)) {
             return Color(0.0f);
         }
 

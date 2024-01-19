@@ -181,6 +181,17 @@ public:
             indent(m_inverse)
         );
     }
+
+    /// @brief Transforms a normal vector using the matrix adjoint (transpose of inverse)
+    Vector applyNormal(const Vector &normal) const {
+        assert_normalized(normal, {
+            logger(EError, "The vector given to applyNormal is not normalized");
+        });
+        
+        const Matrix4x4 adjoint = m_inverse.transpose();
+        const Vector4 result = adjoint * Vector4(normal, 0);
+        return Vector(result.x(), result.y(), result.z()).normalized();
+    }
 };
 
 }

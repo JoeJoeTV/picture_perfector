@@ -174,4 +174,16 @@ BsdfEval Intersection::evaluateBsdf(const Vector &wi) const {
     return instance->bsdf()->evaluate(uv, frame.toLocal(wo), frame.toLocal(wi));
 }
 
+Color Intersection::getAlbedo() const{
+        if (instance == nullptr) {
+            return Color(0);
+        }
+
+        if (instance->bsdf() == nullptr) {
+            return Color(0);
+        }
+        
+        return instance->bsdf()->getAlbedo(uv);
+    }
+
 }

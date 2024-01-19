@@ -29,7 +29,7 @@ public:
                         * microfacet::evaluateGGX(alpha, n)
                         * microfacet::smithG1(alpha, n, wi)
                         * microfacet::smithG1(alpha, n, wo);
-        const float b = 4 * Frame::cosTheta(wi) * Frame::cosTheta(wo);
+        const float b = 4  * abs(Frame::cosTheta(wo));
         const Color weight = (a / b);
         
         return BsdfEval{
@@ -70,6 +70,10 @@ public:
                            "  roughness = %s\n"
                            "]",
                            indent(m_reflectance), indent(m_roughness));
+    }
+
+    Color getAlbedo(const Point2 &uv) const override {
+        return Color(0);
     }
 };
 

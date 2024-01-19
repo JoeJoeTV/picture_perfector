@@ -23,6 +23,25 @@ class Sphere : public Shape {
 
     /// @brief The radius of the sphere
     float m_radius;
+
+    /**
+     * @brief Constructs a surface event for a given position, used by @ref intersect to populate the @ref Intersection
+     * and by @ref sampleArea to populate the @ref AreaSample .
+     * @param surf The surface event to populate with texture coordinates, shading frame and area pdf
+     * @param position The hitpoint (i.e., point in [-1,-1,0] to [+1,+1,0]), found via intersection or area sampling
+     */
+    inline void populate(SurfaceEvent &surf, const Point &position) const {
+        surf.position = position;
+        
+        surf.uv = getSphereUV(position);
+
+        surf.frame.normal = (position - this->m_center).normalized();
+        surf.frame.tangent = surf.frame.normal.cross(Vector{0.0f, 1.0f, 0.0f}).normalized();
+        surf.frame.bitangent = surf.frame.normal.cross(surf.frame.tangent).normalized();
+
+        surf.pdf = 1.f / (4.f * Pi);
+    }
+
 public:
     Sphere(const Properties &properties) {
         this->m_center = Point{0,0,0};
@@ -77,16 +96,7 @@ public:
         // We have found a successful hit, so update in intersection object
         its.t = tClose;
 
-        its.position = hitPoint;
-        
-        its.uv = getSphereUV(hitPoint);
-
-        its.frame.normal = (hitPoint - this->m_center).normalized();
-        its.frame.tangent = its.frame.normal.cross(Vector{0.0f, 1.0f, 0.0f}).normalized();
-        its.frame.bitangent = its.frame.normal.cross(its.frame.tangent).normalized();
-
-        its.pdf = 0.0f;
-
+        populate(its, hitPoint);
         return true;
     }
 
@@ -102,7 +112,13 @@ public:
     }
 
     AreaSample sampleArea(Sampler &rng) const override {
-        NOT_IMPLEMENTED
+        Point2 rnd = rng.next2D();
+        Vector position = squareToUniformSphere(rnd).normalized();
+
+        AreaSample sample;
+        sample.area = 4*Pi;
+        populate(sample, position); // compute the shading frame, texture coordinates and area pdf (same as intersection)
+        return sample;
     }
     
     std::string toString() const override {
