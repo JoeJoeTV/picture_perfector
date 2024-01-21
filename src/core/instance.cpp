@@ -35,33 +35,29 @@ void Instance::transformFrame(SurfaceEvent &surf) const {
     surf.frame = Frame(surf.frame.normal);
 }
 
-bool Instance::handlePortalLink(const Intersection &oldIts, Intersection &its, const Ray &ray) const {
-    if (this->m_link->shouldTeleport(this, its)) {
-        its.forward = true;
-        its.forwardRay = this->m_link->getTeleportedRay(this, ray, its);
-        return true;
-    } else {
-        its = oldIts;
-        return false;
-    }
-}
-
 bool Instance::intersect(const Ray &worldRay, Intersection &its, Sampler &rng) const {
-    Intersection oldIts = its;
-
     if (!m_transform) {
         // fast path, if no transform is needed
+        const float previousT = its.t;
         Ray localRay = worldRay;
-        if (m_shape->intersect(localRay, its, rng)) {
-            its.instance = this;
 
-            // If the instance is a portal, forward the ray and exit
+        if (m_shape->intersect(localRay, its, rng)) {
+            // If this instance is used as a portal, we have to perform more logic
             if (this->m_link) {
-                const bool ret = this->handlePortalLink(oldIts, its, localRay);
-                if (ret or !PORTALS_DEBUG) {
-                    return ret;
+                // Check if portal mask is hit. If not, treat it as if no intersection happened at all
+                if (this->m_link->shouldTeleport(this, its)) {
+                    its.forward.doForward = true;
+                    its.forward.ray = this->m_link->getTeleportedRay(this, localRay, its.position);
+                } else {
+                    its.t = previousT;
+                    return false;
                 }
+            } else {
+                // We know that this instance is not a portal and this instance is in front of any previous portal, so we can reset the values
+                its.forward.doForward = false;
             }
+            
+            its.instance = this;
 
             return true;
         } else {
@@ -80,23 +76,25 @@ bool Instance::intersect(const Ray &worldRay, Intersection &its, Sampler &rng) c
         its.t = (localRay.origin - this->m_transform->inverse(its.position)).length();
     }
 
-    // hints:
-    // * transform the ray (do not forget to normalize!)
-    // * how does its.t need to change?
-
     const bool wasIntersected = m_shape->intersect(localRay, its, rng);
     if (wasIntersected) {
-        // hint: how does its.t need to change?
-
-        its.instance = this;
-
-        // If the instance is a portal, forward the ray and exit
+        // If this instance is used as a portal, we have to perform more logic
         if (this->m_link) {
-            const bool ret = this->handlePortalLink(oldIts, its, localRay);
-            if (ret or !PORTALS_DEBUG) {
-                return ret;
+            // Check if portal mask is hit. If not, treat it as if no intersection happened at all
+            if (this->m_link->shouldTeleport(this, its)) {
+                its.forward.doForward = true;
+                its.forward.ray = this->m_link->getTeleportedRay(this, localRay, its.position);
+            } else {
+                its.t = previousT;
+                return false;
             }
+        } else {
+            // We know that this instance is not a portal and this instance is in front of any previous portal, so we can reset the values
+            its.forward.doForward = false;
         }
+
+        // We know that we hit the shape, so set related data and return true
+        its.instance = this;
         
         transformFrame(its);
 

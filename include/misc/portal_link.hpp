@@ -36,7 +36,7 @@ public:
     /// @param portal A pointer to the instance representing the portal
     /// @param incomingRay A pointer to the ray that hit the portal surface
     /// @return The "teleported" Ray
-    Ray getTeleportedRay(const Instance* portal, const Ray &incomingRay, const Intersection &its);
+    Ray getTeleportedRay(const Instance* portal, const Ray &incomingRay, const Point &origin);
 
     /// @brief Checks wether the ray should be teleported or let through
     /// @param portal A pointer to the instance representing the portal

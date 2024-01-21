@@ -46,9 +46,6 @@ class Instance : public Shape {
     /// @brief Transforms the frame from object coordinates to world coordinates.
     inline void transformFrame(SurfaceEvent &surf) const;
 
-    /// @brief Handles the usage of the portal link, if present 
-    inline bool handlePortalLink(const Intersection &oldIts, Intersection &its, const Ray &ray) const;
-
 public:
     Instance(const Properties &properties) 
         : m_light(nullptr) {

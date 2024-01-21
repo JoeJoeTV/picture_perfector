@@ -1,6 +1,8 @@
 #include <lightwave.hpp>
 #include <misc/portal_link.hpp>
 
+// Thinking with portals
+
 namespace lightwave {
 
 void PortalLink::registerPortal(const Instance* portal, const ref<Transform> transform) {
@@ -19,7 +21,7 @@ void PortalLink::registerPortal(const Instance* portal, const ref<Transform> tra
     }
 }
 
-Ray PortalLink::getTeleportedRay(const Instance* portal, const Ray &incomingRay, const Intersection &its) {
+Ray PortalLink::getTeleportedRay(const Instance* portal, const Ray &incomingRay, const Point &origin) {
     PortalData destPortal;
 
     if (portal == this->m_firstPortal.instance) {
@@ -34,12 +36,11 @@ Ray PortalLink::getTeleportedRay(const Instance* portal, const Ray &incomingRay,
 
     if (destPortal.transform) {
         return Ray(
-            destPortal.transform->apply(its.position),
+            destPortal.transform->apply(origin),
             destPortal.transform->apply(incomingRay.direction).normalized(),
             incomingRay.depth + 1
         );
     } else {
-        logger(EInfo, "NOT TRANSFORM!");
         return Ray(incomingRay.origin, incomingRay.direction, incomingRay.depth + 1);
     }
 }
