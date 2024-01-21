@@ -17,14 +17,14 @@ typedef struct PortalData {
 
 class PortalLink : public Object {
     /// @brief A texture defining the "shape" of the portal surface on the plane
-    ref<Texture> m_portalSurface;
+    ref<Texture> m_mask;
 
     /// @brief Data of the two linked portals
     PortalData m_firstPortal;
     PortalData m_secondPortal;
 public:
     PortalLink(const Properties &properties) {
-        m_portalSurface = properties.get<Texture>("portal_surface", nullptr);
+        m_mask = properties.get<Texture>("mask", nullptr);
     }
 
     /// @brief Registers an instance as either the first or second portal
@@ -47,11 +47,11 @@ public:
     std::string toString() const override {
         return tfm::format(
             "PortalLink[\n"
-            "  portal_surface = %s,\n"
+            "  mask = %s,\n"
             "  portal #1 = %s,\n"
             "  portal #2 = %s,\n"
             "]",
-            indent(m_portalSurface),
+            indent(m_mask),
             m_firstPortal.instance == nullptr ? "" : indent(m_firstPortal.instance),
             m_secondPortal.instance == nullptr ? "" : indent(m_secondPortal.instance)
         );

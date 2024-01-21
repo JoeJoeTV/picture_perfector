@@ -46,7 +46,12 @@ Ray PortalLink::getTeleportedRay(const Instance* portal, const Ray &incomingRay,
 }
 
 bool PortalLink::shouldTeleport(const Instance* portal, const Intersection &hit) {
-    //TODO: Implement Image mask
+    if (this->m_mask) {
+        const Color maskColor = this->m_mask->evaluate(hit.uv);
+        return ((maskColor.r() == 0.0f) and (maskColor.g() == 0.0f) and (maskColor.b() == 0.0f));
+    }
+    
+
     return true;
 }
     
