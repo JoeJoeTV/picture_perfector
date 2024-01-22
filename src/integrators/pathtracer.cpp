@@ -53,7 +53,7 @@ public:
 
         for (int i = 0; i < m_depth; i++) {
             // intersect the ray with the scene
-            Intersection its = m_scene->intersect(currentRay, rng);
+            Intersection its = m_scene->intersect(currentRay, rng, this->m_depth);
 
             // if no intersection occured
             if (!its) {
