@@ -52,6 +52,8 @@ public:
         Ray currentRay = ray;
 
         for (int i = 0; i < m_depth; i++) {
+            DEBUG_PIXEL_LOG("[Pathtracer](i=%d) ray=(o=%s d=%s)", i, currentRay.origin, currentRay.direction);
+            
             // intersect the ray with the scene
             Intersection its = m_scene->intersect(currentRay, rng);
 
@@ -61,6 +63,8 @@ public:
                 accumulatedLight += accumulatedWeight * backgroundLight;
                 break;
             }
+
+            DEBUG_PIXEL_LOG("[Pathtracer](i=%d) Intersection: pos=%s wo=%s t=%f forward?=%s object=%s", i, its.position, its.wo, its.t, its.forward.doForward, its.instance->id());
             
             // sample the bsdf for a new bounce and weight
             BsdfSample sample = its.sampleBsdf(rng);
