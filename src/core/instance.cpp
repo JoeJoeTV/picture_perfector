@@ -2,6 +2,7 @@
 #include <lightwave/instance.hpp>
 #include <lightwave/registry.hpp>
 #include <lightwave/sampler.hpp>
+#include <lightwave/integrator.hpp>
 
 namespace lightwave {
 
