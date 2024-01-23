@@ -76,10 +76,15 @@ public:
                 lightContribution = Color(0.f);
             }
             accumulatedLight += accumulatedWeight * (emissions + lightContribution);
-            accumulatedWeight *= sample.weight;         
+            accumulatedWeight *= sample.weight;   
+            
+            // If we get an invalid sample, simply break out of loop
+            if (sample.isInvalid()) {
+                break;
+            }      
 
             // update variables for next iteration
-            currentRay = Ray(its.position, sample.wi.normalized(), i+1);
+            currentRay = Ray(its.position, sample.wi, i+1);
         }  
 
         return accumulatedLight;
