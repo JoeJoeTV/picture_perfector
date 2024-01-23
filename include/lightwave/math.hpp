@@ -66,6 +66,8 @@ inline float min(float a, float b) { return std::min(a, b); }
 inline float copysign(float mag, float sgn) { return std::copysign(mag, sgn); }
 /// @brief Returns the absolute value of @c v .
 inline float abs(float v) { return std::abs(v); }
+/// @brief Returns the sign of a float value as either positive or negative 1
+inline float sign(float v) { return v < 0 ? -1.0f : 1.0f; }
 
 /// @brief Clamps a value @c v to lie in the interval from @c lo to @c hi .
 inline float clamp(float v, float lo, float hi) { return max(lo, min(v, hi)); }

@@ -22,7 +22,7 @@ struct DiffuseLobe {
     }
 
     BsdfSample sample(const Vector &wo, Sampler &rng) const {
-        Vector wi = squareToCosineHemisphere(rng.next2D()).normalized();
+        Vector wi = squareToCosineHemisphere(rng.next2D()) * sign(Frame::cosTheta(wo));
 
         return BsdfSample{
             .wi = wi,

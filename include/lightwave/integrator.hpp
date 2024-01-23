@@ -14,6 +14,23 @@
 
 namespace lightwave {
 
+//#define DEBUG_PIXEL
+//#define DEBUG_PIXEL_POS Point2i(0, 0)
+
+#ifdef DEBUG_PIXEL
+typedef struct t_debugPixel {
+    bool active = false;
+    int sample = 0;
+} t_debugPixel;
+extern t_debugPixel debugPixel;
+#endif
+
+#ifdef DEBUG_PIXEL
+#define DEBUG_PIXEL_LOG(...) if (debugPixel.active) logger(EDebug, __VA_ARGS__)
+#else
+#define DEBUG_PIXEL_LOG(...) do {} while(0)
+#endif
+
 /**
  * @brief Integrators are rendering algorithms that take a scene and produce an image from them (e.g., using path tracing).
  * The term integrator refers to the key challenge of simulating light transport, namely solving the reflected radiance integral.

@@ -2,6 +2,7 @@
 #include <lightwave/instance.hpp>
 #include <lightwave/registry.hpp>
 #include <lightwave/sampler.hpp>
+#include <lightwave/integrator.hpp>
 
 namespace lightwave {
 
@@ -101,8 +102,12 @@ bool Instance::intersect(const Ray &worldRay, Intersection &its, Sampler &rng) c
         // Calculate new t in world space
         its.t = (its.position - worldRay.origin).length();
 
+        DEBUG_PIXEL_LOG("[Instance/%s] Ray: o=%s d=%s  Intersection: t=%f pos=%s", this->id(), worldRay.origin, worldRay.direction, its.t, its.position);
+
         return true;
     } else {
+        DEBUG_PIXEL_LOG("[Instance/%s] Ray: o=%s d=%s  No Intersection", this->id(), worldRay.origin, worldRay.direction);
+
         its.t = previousT;
         return false;
     }
