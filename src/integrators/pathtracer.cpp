@@ -64,7 +64,7 @@ public:
                 break;
             }
 
-            DEBUG_PIXEL_LOG("[Pathtracer](i=%d) Intersection: pos=%s wo=%s t=%f forward?=%s object=%s", i, its.position, its.wo, its.t, its.forward.doForward, its.instance->id());
+            DEBUG_PIXEL_LOG("[Pathtracer](i=%d) Intersection: pos=%s wo=%s t=%f object=%s", i, its.position, its.wo, its.t, its.instance->id());
             
             // sample the bsdf for a new bounce and weight
             BsdfSample sample = its.sampleBsdf(rng);
