@@ -33,6 +33,8 @@ public:
 
     virtual float getSigmaS() const = 0;
 
+    virtual Emission *emission() const = 0;
+
     virtual float probabilityOfSampelingBeforeT(float t) const = 0;
 
     virtual float probabilityOfSampelingThisPoint(float t) const = 0;

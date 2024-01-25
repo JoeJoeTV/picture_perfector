@@ -6,12 +6,16 @@ class HomogeneousMedium : public Medium {
     float m_sigmaT;
     float m_sigmaS;
     Color m_color;
+    ref<Emission> m_emission;
 
 public:
     HomogeneousMedium(const Properties &properties) {
         m_sigmaT = properties.get<float>("sigmaT");
         m_color = properties.get<Color>("color", Color(0));
+        m_emission = properties.getOptionalChild<Emission>();
     }
+
+    Emission *emission() const override { return m_emission.get(); }
 
     float Tr(const Ray &ray, const float tIntersection, Sampler &rng) const override {
         // implement beer's law

@@ -119,9 +119,13 @@ public:
                 float mediumTValue = (*currentMedium).Tr(currentRay, tScatter, rng);
 
                 Intersection itsMedium = Intersection(its.wo, tScatter);
+                itsMedium.uv = Point2(0,0);
                 itsMedium.position = currentRay(tScatter);
                 // next event estimation to evaluate light
                 Color lightContribution = calculateLight(itsMedium, rng);
+
+                // get emissions of intersection
+                Color emission = (*currentMedium).emission()->evaluate(Point2(0,0), Vector(0,0,0)).value;
 
                 if (i == m_depth-1) {
                     lightContribution = Color(0.f);
@@ -129,6 +133,7 @@ public:
 
                 float probabilityOfThisScatter = (*currentMedium).probabilityOfSampelingThisPoint(tScatter);
 
+                accumulatedLight += emission * accumulatedWeight;
                 accumulatedWeight *= mediumTValue * currentMedium->getColor() / (probabilityOfThisScatter*Pi);
                 accumulatedLight +=  accumulatedWeight * lightContribution;
                 
