@@ -125,7 +125,10 @@ public:
                 Color lightContribution = calculateLight(itsMedium, rng);
 
                 // get emissions of intersection
-                Color emission = (*currentMedium).emission()->evaluate(Point2(0,0), Vector(0,0,0)).value;
+                Color emission = Color(0);
+                if ((*currentMedium).emission() != nullptr) {
+                    emission = (*currentMedium).emission()->evaluate(Point2(0,0), Vector(0,0,0)).value;
+                } 
 
                 if (i == m_depth-1) {
                     lightContribution = Color(0.f);
