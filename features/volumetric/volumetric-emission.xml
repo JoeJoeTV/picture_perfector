@@ -1,0 +1,64 @@
+
+    <scene id="scene">
+        <camera type="perspective" id="camera">
+            <integer name="width" value="400"/>
+            <integer name="height" value="400"/>
+
+            <string name="fovAxis" value="x"/>
+            <float name="fov" value="40"/>
+
+            <transform>
+                <translate z="-5"/>
+            </transform>
+        </camera>
+
+        <instance>
+            <shape type="rectangle"/>
+            <bsdf type="diffuse">
+                <texture name="albedo" type="constant" value="1"/>
+            </bsdf>
+            <transform>
+                <rotate axis="1,0,0" angle="90"/>
+                <scale value="10"/>
+                <translate y="1"/>
+            </transform>
+        </instance>
+
+        <instance>
+            <shape type="sphere"/>
+            <medium type="homogeneous" sigmaT="0.1" color="1,0,0">
+                <emission type="lambertian">
+                    <texture name="emission" type="constant" value="1"/>
+                </emission>
+            </medium>
+            <transform>
+                <scale value="1"/>
+                <translate y="0" z="0" x="-0.2"/>
+            </transform>
+        </instance>
+    </scene>
+
+    <integrator type="volumePathtracer" depth="100">    
+        <ref id="scene"/>
+        <image id="volumetric-emission"/>
+        <sampler type="independent" count="128"/>
+    </integrator>
+    <integrator type="normals">
+        <ref id="scene"/>
+        <image id="normals"/>
+        <sampler type="independent" count="64"/>
+    </integrator>
+    <integrator type="albedo">
+        <ref id="scene"/>
+        <image id="albedo"/>
+        <sampler type="independent" count="64"/>
+    </integrator>
+
+    <postprocess type="denoising">
+        <ref name="input" id="volumetric-emission"/>
+        <ref name="normals" id="normals"/>
+        <ref name="albedo" id="albedo"/>
+        <image id="volumetric-emission-denoised"/>
+    </postprocess>
+
+
