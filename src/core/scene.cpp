@@ -4,6 +4,7 @@
 #include <lightwave/shape.hpp>
 #include <lightwave/camera.hpp>
 #include <lightwave/light.hpp>
+#include <lightwave/instance.hpp>
 
 namespace lightwave {
 
@@ -33,9 +34,27 @@ std::string Scene::toString() const {
     );
 }
 
-Intersection Scene::intersect(const Ray &ray, Sampler &rng) const {
-    Intersection its(-ray.direction);
-    m_shape->intersect(ray, its, rng);
+Intersection Scene::intersect(const Ray &ray, Sampler &rng, const int maxForwards) const {
+    Ray currentRay = ray;
+    Intersection its(-currentRay.direction);
+
+    // How many times has the ray been forwarded
+    int fwCount = 0;
+
+    do {
+        // If the previous intersection requested to forward the ray,
+        // then we set that as the new ray and intersect again
+        if (its.forward.doForward) {
+            currentRay = its.forward.ray;
+            its = Intersection(-currentRay.direction);
+            DEBUG_PIXEL_LOG("[Scene](count=%d) Ray forward o=%a d=%s", fwCount, currentRay.origin, currentRay.direction);
+        }
+
+        m_shape->intersect(currentRay, its, rng);
+
+        fwCount++;
+    } while (its.forward.doForward and (fwCount < maxForwards));
+
     return its;
 }
 

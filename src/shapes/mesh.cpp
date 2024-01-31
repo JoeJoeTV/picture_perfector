@@ -124,20 +124,37 @@ protected:
             -tc2.x(), tc1.x()
         };
 
+        float divisor = tc1.x() * tc2.y() - tc2.x() * tc1.y();
+
         // Matrix containing the calculated tangent in the first row and the bitangent in the second row
-        TMatrix<float, 2, 3> TB = (1 / (tc1.x() * tc2.y() - tc2.x() * tc1.y())) * (TM * QM);
+        TMatrix<float, 2, 3> TB;
+
+        //TODO: Maybe better fallback or work around fallback
+        if (divisor != 0.0f) {
+            TB = (1 / divisor) * (TM * QM);
+        }
 
         if (this->m_smoothNormals) {
             // Use interpolated normal combines with tangent calculates using texture coordinates,
             // but re-calculate the tangent to make sure it's orthogonal
             its.frame.normal = interpolatedVertex.normal.normalized();
-            its.frame.tangent = TB.row(1).cross(its.frame.normal).normalized();
+            if (divisor != 0.0f) {
+                its.frame.tangent = TB.row(1).cross(its.frame.normal).normalized();
+            } else {
+                // Fallback for when two texture coordinates are the same
+                its.frame.tangent = planeEdge1.cross(its.frame.normal).normalized();
+            }
             its.frame.bitangent = its.frame.normal.cross(its.frame.tangent).normalized();
         } else {
             const Vector normal = planeEdge1.cross(planeEdge2).normalized();
 
             its.frame.normal = normal;
-            its.frame.tangent = TB.row(0).normalized();
+            if (divisor != 0.0f) {
+                its.frame.tangent = TB.row(0).normalized();
+            } else {
+                // Fallback for when two texture coordinates are the same
+                its.frame.tangent = planeEdge1.cross(its.frame.normal).normalized();
+            }
             its.frame.bitangent = its.frame.normal.cross(its.frame.tangent).normalized();
         }
 

@@ -33,7 +33,7 @@ public:
                       Sampler &rng) const override {
         // sample an outgoing ray wi where normal is in z direction 
         // Vector wi = squareToUniformHemisphere(rng.next2D());
-        Vector wi = squareToCosineHemisphere(rng.next2D()).normalized();
+        Vector wi = squareToCosineHemisphere(rng.next2D()) * sign(Frame::cosTheta(wo));
 
         // calculate the weight of the ray
         // float foreshortening =  Frame::cosTheta(wi);

@@ -21,9 +21,7 @@ class Pathtracer : public SamplingIntegrator {
         const DirectLightSample dls = ls.light->sampleDirect(its.position, rng);
 
         // Check if light source is blocked for intersection
-        const Intersection its_shadow = this->m_scene->intersect(Ray(its.position, dls.wi), rng);
-
-        if (its_shadow and (its_shadow.t < dls.distance)) {
+        if (this->m_scene->intersect(Ray(its.position, dls.wi), dls.distance, rng)) {
             return Color(0.0f);
         }
 
@@ -54,8 +52,10 @@ public:
         Ray currentRay = ray;
 
         for (int i = 0; i < m_depth; i++) {
+            DEBUG_PIXEL_LOG("[Pathtracer](i=%d) ray=(o=%s d=%s)", i, currentRay.origin, currentRay.direction);
+            
             // intersect the ray with the scene
-            Intersection its = m_scene->intersect(currentRay, rng);
+            Intersection its = m_scene->intersect(currentRay, rng, this->m_depth);
 
             // if no intersection occured
             if (!its) {
@@ -63,6 +63,8 @@ public:
                 accumulatedLight += accumulatedWeight * backgroundLight;
                 break;
             }
+
+            DEBUG_PIXEL_LOG("[Pathtracer](i=%d) Intersection: pos=%s wo=%s t=%f object=%s", i, its.position, its.wo, its.t, its.instance->id());
             
             // sample the bsdf for a new bounce and weight
             BsdfSample sample = its.sampleBsdf(rng);
@@ -78,10 +80,15 @@ public:
                 lightContribution = Color(0.f);
             }
             accumulatedLight += accumulatedWeight * (emissions + lightContribution);
-            accumulatedWeight *= sample.weight;         
+            accumulatedWeight *= sample.weight;   
+            
+            // If we get an invalid sample, simply break out of loop
+            if (sample.isInvalid()) {
+                break;
+            }      
 
             // update variables for next iteration
-            currentRay = Ray(its.position, sample.wi.normalized(), i+1);
+            currentRay = Ray(its.position, sample.wi, i+1);
         }  
 
         return accumulatedLight;

@@ -7,6 +7,9 @@
 
 #include <lightwave/core.hpp>
 #include <lightwave/shape.hpp>
+#include <lightwave/medium.hpp>
+
+#include <misc/portal_link.hpp>
 
 namespace lightwave {
 
@@ -25,11 +28,14 @@ class Instance : public Shape {
     /// @brief The shape wrapped by the instance.
     ref<Shape> m_shape;
     /// @brief The material that the shape should be rendered with (can be null for non-reflecting objects).
+    // nullBSDF means we just pass the ray through. This is nice for mediums
     ref<Bsdf> m_bsdf;
     /// @brief The distribution of light the shape should emit (can be null for non-emissive objects).
     ref<Emission> m_emission;
     /// @brief The transformation applied to the shape, leading from object coordinates to world coordinates.
     ref<Transform> m_transform;
+    /// @brief The medium inside of this Instance
+    ref<Medium> m_medium;
     /// @brief Flip the normal direction, used to correct for the change of handedness in case the transformation mirrors the object.
     bool m_flipNormal;
     /// @brief Tracks whether this instance has been added to the scene, i.e., could be hit by ray tracing.
@@ -37,6 +43,9 @@ class Instance : public Shape {
 
     /// @brief The texture representing the normal map for the object instance
     ref<Texture> m_normal;
+
+    /// @brief Potential Portal Link, if instance is used as a portal shape object
+    ref<PortalLink> m_link;
     
     /// @brief Transforms the frame from object coordinates to world coordinates.
     inline void transformFrame(SurfaceEvent &surf) const;
@@ -47,13 +56,29 @@ public:
         m_shape = properties.getChild<Shape>();
         m_bsdf = properties.getOptionalChild<Bsdf>();
         m_emission = properties.getOptionalChild<Emission>();
+        m_medium = properties.getOptionalChild<Medium>();
         m_transform = properties.getOptionalChild<Transform>();
         m_normal = properties.get<Texture>("normal", nullptr);
+        m_link = properties.get<PortalLink>("link", nullptr);
         m_visible = false;
         
         m_flipNormal = false;
         if (m_transform && m_transform->determinant() < 0) {
             m_flipNormal = !m_flipNormal;
+        }
+
+        // If a portal link is specified, try to register
+        if (m_link) {
+            // Get shape identifier from toString function
+            const std::string shapeString = m_shape->toString();
+            const std::string shapeID = shapeString.substr(0, shapeString.find("["));
+
+            // Check if shape is supported as a portal surface
+            if (std::find(SUPPORTED_SHAPE_IDS.begin(), SUPPORTED_SHAPE_IDS.end(), shapeID) != SUPPORTED_SHAPE_IDS.end()) {
+                m_link->registerPortal(this, m_transform);
+            } else {
+                lightwave_throw("Shape is not supported when used as a portal surface: %s", shapeString);
+            }
         }
     }
 
@@ -63,6 +88,8 @@ public:
     Emission *emission() const { return m_emission.get(); }
     /// @brief Returns the light object that contains this instance (or null if this instance is not part of any area light).
     Light *light() const { return m_light; }
+    /// @brief Returns the medium inside this instance (can be null if there is a vakuum inside).
+    Medium *medium() const { return m_medium.get(); }
 
     /// @brief Returns whether this instance has been added to the scene, i.e., could be hit by ray tracing.
     bool isVisible() const { return m_visible; }

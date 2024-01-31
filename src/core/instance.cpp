@@ -2,6 +2,7 @@
 #include <lightwave/instance.hpp>
 #include <lightwave/registry.hpp>
 #include <lightwave/sampler.hpp>
+#include <lightwave/integrator.hpp>
 
 namespace lightwave {
 
@@ -36,10 +37,29 @@ void Instance::transformFrame(SurfaceEvent &surf) const {
 }
 
 bool Instance::intersect(const Ray &worldRay, Intersection &its, Sampler &rng) const {
+    Intersection originalIts = its;
+    
     if (!m_transform) {
         // fast path, if no transform is needed
         Ray localRay = worldRay;
+
         if (m_shape->intersect(localRay, its, rng)) {
+            // If this instance is used as a portal, we have to perform more logic
+            if (this->m_link) {
+                // Check if portal mask is hit. If not, treat it as if no intersection happened at all
+                if (this->m_link->shouldTeleport(this, its)) {
+                    its.forward.doForward = true;
+                    its.forward.ray = this->m_link->getTeleportedRay(this, localRay, its.position);
+                } else {
+                    // Restore entire original intersection, because it was modified by shape intersect function
+                    its = originalIts;
+                    return false;
+                }
+            } else {
+                // We know that this instance is not a portal and this instance is in front of any previous portal, so we can reset the values
+                its.forward.doForward = false;
+            }
+            
             its.instance = this;
 
             return true;
@@ -59,22 +79,40 @@ bool Instance::intersect(const Ray &worldRay, Intersection &its, Sampler &rng) c
         its.t = (localRay.origin - this->m_transform->inverse(its.position)).length();
     }
 
-    // hints:
-    // * transform the ray (do not forget to normalize!)
-    // * how does its.t need to change?
-
     const bool wasIntersected = m_shape->intersect(localRay, its, rng);
     if (wasIntersected) {
-        // hint: how does its.t need to change?
-        
+        // If this instance is used as a portal, we have to perform more logic
+        if (this->m_link) {
+            // Check if portal mask is hit. If not, treat it as if no intersection happened at all
+            if (this->m_link->shouldTeleport(this, its)) {
+                its.forward.doForward = true;
+                its.forward.ray = this->m_link->getTeleportedRay(this, localRay, its.position);
+            } else {
+                DEBUG_PIXEL_LOG("[Instance/%s] Ray: o=%s d=%s  No Intersection (Not teleported)", this->id(), worldRay.origin, worldRay.direction);
+
+                // Restore entire original intersection, because it was modified by shape intersect function
+                its = originalIts;
+                return false;
+            }
+        } else {
+            // We know that this instance is not a portal and this instance is in front of any previous portal, so we can reset the values
+            its.forward.doForward = false;
+        }
+
+        // We know that we hit the shape, so set related data and return true
         its.instance = this;
+        
         transformFrame(its);
 
         // Calculate new t in world space
         its.t = (its.position - worldRay.origin).length();
 
+        DEBUG_PIXEL_LOG("[Instance/%s] Ray: o=%s d=%s  Intersection: t=%f pos=%s", this->id(), worldRay.origin, worldRay.direction, its.t, its.position);
+
         return true;
     } else {
+        DEBUG_PIXEL_LOG("[Instance/%s] Ray: o=%s d=%s  No Intersection", this->id(), worldRay.origin, worldRay.direction);
+
         its.t = previousT;
         return false;
     }
