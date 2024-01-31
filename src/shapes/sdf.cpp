@@ -142,7 +142,7 @@ public:
             // Calculate point at current march distance
             const PointReal marchPoint = marchRay(marchedDist).cast<autodiff::real>();
             // Caulculate/Estimate distance of current point to the SDF object
-            distance = std::max(abs(static_cast<float>(this->estimateDistance(marchPoint))), this->m_minDistance / 2);
+            distance = std::copysign(std::max(abs(static_cast<float>(this->estimateDistance(marchPoint))), this->m_minDistance / 2), distance);
 
             // Check conditions for no intersection
             if ((its and (marchedDist > its.t))   // Hit would be obstructed by existing hit
@@ -158,7 +158,7 @@ public:
                 break;
             }
 
-            marchedDist += distance;
+            marchedDist += abs(distance);
         }
 
         // If the maximum amount of steps was reached, we didn't find an intersection, so return false
