@@ -1,0 +1,119 @@
+<scene id="scene">
+  <camera type="perspective">
+    <integer name="width" value="1920"/>
+    <integer name="height" value="1080"/>
+    <float name="fov" value="65.47"/>
+    <string name="fovAxis" value="x"/>
+    <transform>
+      <matrix value="0.15485,0.0075989,-0.98791,2.5557,  0.98794,-0.001192,0.15484,-1.0559,  -9.108e-07,-0.99997,-0.0076918,2.0778,  0,0,0,1"/>
+    </transform>
+  </camera>
+  <link id="portal_link">
+    <texture name="mask" type="image" filename="textures/portal_mask.png"/>
+  </link>
+  <instance>
+    <bsdf type="diffuse">
+      <texture name="albedo" type="image" filename="textures/portal_game_floor.png"/>
+    </bsdf>
+    <shape type="mesh" filename="meshes/Floor.ply"/>
+    <transform>
+      <matrix value="12,0,0,0,  0,12,0,0,  0,0,1,0,  0,0,0,1"/>
+    </transform>
+  </instance>
+  <instance>
+    <ref name="link" id="portal_link"/>
+    <shape type="rectangle"/>
+    <transform>
+      <matrix value="-8.7423e-08,0,1,2.98,  0,1,0,0,  -2,0,-4.3711e-08,2,  0,0,0,1"/>
+    </transform>
+  </instance>
+  <instance>
+    <bsdf type="diffuse">
+      <texture name="albedo" type="constant" value="0.5,0.13556,0"/>
+    </bsdf>
+    <emission type="lambertian">
+      <texture name="emission" type="constant" value="0.5,0.13556,0"/>
+    </emission>
+    <shape type="mesh" filename="meshes/Portal_Frame.ply"/>
+    <transform>
+      <matrix value="-8.7423e-08,0,1,2.99,  0,1,0,0,  -2,0,-4.3711e-08,2,  0,0,0,1"/>
+    </transform>
+  </instance>
+  <instance>
+    <bsdf type="diffuse">
+      <texture name="albedo" type="image" filename="textures/portal_game_wall.png"/>
+    </bsdf>
+    <shape type="mesh" filename="meshes/Wall.ply"/>
+    <transform>
+      <matrix value="1,0,0,4,  0,3.01,0,0,  0,0,2,2,  0,0,0,1"/>
+    </transform>
+  </instance>
+  <light type="area">
+    <instance>
+      <shape type="rectangle"/>
+      <transform>
+        <matrix value="0.5,0,-0,0,  0,4.6202,-0,3.381,  0,0,-1,10,  0,0,0,1"/>
+      </transform>
+      <emission type="lambertian">
+        <texture name="emission" type="constant" value="2.7055,2.7055,2.7055"/>
+      </emission>
+    </instance>
+  </light>
+  <instance>
+    <ref name="link" id="portal_link"/>
+    <shape type="rectangle"/>
+    <transform>
+      <matrix value="-8.7423e-08,0,1,-2.98,  0,1,0,0,  -2,0,-4.3711e-08,2,  0,0,0,1"/>
+    </transform>
+  </instance>
+  <instance>
+    <bsdf type="diffuse">
+      <texture name="albedo" type="constant" value="0,0.086617,0.5"/>
+    </bsdf>
+    <emission type="lambertian">
+      <texture name="emission" type="constant" value="0,0.086617,0.5"/>
+    </emission>
+    <shape type="mesh" filename="meshes/Portal_Frame.ply"/>
+    <transform>
+      <matrix value="-8.7423e-08,0,1,-2.99,  0,1,0,0,  -2,0,-4.3711e-08,2,  0,0,0,1"/>
+    </transform>
+  </instance>
+  <instance>
+    <bsdf type="diffuse">
+      <texture name="albedo" type="image" filename="textures/portal_game_wall.png"/>
+    </bsdf>
+    <shape type="mesh" filename="meshes/Wall.ply"/>
+    <transform>
+      <matrix value="1,0,0,-4,  0,3.01,0,0,  0,0,2,2,  0,0,0,1"/>
+    </transform>
+  </instance>
+  <light type="envmap">
+    <texture type="image" filename="textures/hospital_room_4K_6be7100f-fa50-4bda-a1e7-1e1f2a71c3ab.exr.exr" border="clamp" linear="true"/>
+    <transform>
+      <matrix value="1,0,0,0,  0,0,1,0,  0,-1,0,0,  0,0,0,1"/>
+    </transform>
+  </light>
+</scene>
+<integrator type="pathtracer" depth="15">
+  <ref id="scene"/>
+  <image id="thinking_with_portals_noisy"/>
+  <sampler type="independent" count="1024"/>
+</integrator>
+
+<integrator type="normals">
+  <ref id="scene"/>
+  <image id="thinking_with_portals_normals"/>
+  <sampler type="independent" count="1024"/>
+</integrator>
+<integrator type="albedo">
+  <ref id="scene"/>
+  <image id="thinking_with_portals_albedo"/>
+  <sampler type="independent" count="1024"/>
+</integrator>
+
+<postprocess type="denoising">
+  <ref name="input" id="thinking_with_portals_noisy"/>
+  <ref name="normals" id="thinking_with_portals_normals"/>
+  <ref name="albedo" id="thinking_with_portals_albedo"/>
+  <image id="thinking_with_portals"/>
+</postprocess>
