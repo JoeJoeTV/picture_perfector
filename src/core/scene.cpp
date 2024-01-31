@@ -47,6 +47,7 @@ Intersection Scene::intersect(const Ray &ray, Sampler &rng, const int maxForward
         if (its.forward.doForward) {
             currentRay = its.forward.ray;
             its = Intersection(-currentRay.direction);
+            DEBUG_PIXEL_LOG("[Scene](count=%d) Ray forward o=%a d=%s", fwCount, currentRay.origin, currentRay.direction);
         }
 
         m_shape->intersect(currentRay, its, rng);

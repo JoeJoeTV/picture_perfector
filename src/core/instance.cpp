@@ -37,9 +37,10 @@ void Instance::transformFrame(SurfaceEvent &surf) const {
 }
 
 bool Instance::intersect(const Ray &worldRay, Intersection &its, Sampler &rng) const {
+    Intersection originalIts = its;
+    
     if (!m_transform) {
         // fast path, if no transform is needed
-        const float previousT = its.t;
         Ray localRay = worldRay;
 
         if (m_shape->intersect(localRay, its, rng)) {
@@ -50,7 +51,8 @@ bool Instance::intersect(const Ray &worldRay, Intersection &its, Sampler &rng) c
                     its.forward.doForward = true;
                     its.forward.ray = this->m_link->getTeleportedRay(this, localRay, its.position);
                 } else {
-                    its.t = previousT;
+                    // Restore entire original intersection, because it was modified by shape intersect function
+                    its = originalIts;
                     return false;
                 }
             } else {
@@ -86,7 +88,10 @@ bool Instance::intersect(const Ray &worldRay, Intersection &its, Sampler &rng) c
                 its.forward.doForward = true;
                 its.forward.ray = this->m_link->getTeleportedRay(this, localRay, its.position);
             } else {
-                its.t = previousT;
+                DEBUG_PIXEL_LOG("[Instance/%s] Ray: o=%s d=%s  No Intersection (Not teleported)", this->id(), worldRay.origin, worldRay.direction);
+
+                // Restore entire original intersection, because it was modified by shape intersect function
+                its = originalIts;
                 return false;
             }
         } else {
