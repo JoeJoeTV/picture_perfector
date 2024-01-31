@@ -7,6 +7,10 @@
 
 namespace lightwave {
 
+enum UVMapMode {
+    NONE, SPHERE
+};
+
 /// @brief A shape defined by a signed distance function (SDF)
 class SDFShape : public Shape {
     /// @brief Maximum amount of ray-marching steps to take before counting as no intersection
@@ -17,6 +21,9 @@ class SDFShape : public Shape {
 
     /// @brief The epsilon used to estimate the normal vectors for hit points
     float m_normalEpsilon;
+
+    /// @brief The mode used to map uv coordinates to shape
+    UVMapMode m_uvMapMode;
 
     /// @brief The actual sdf to use for distance estimation
     ref<SDFObject> m_sdfChild;
@@ -40,6 +47,42 @@ class SDFShape : public Shape {
         return tNear;
     }
 
+    /// @brief Maps the given intersection to UV coordinates according to the specified @var m_uvMapMode
+    /// @param its The intersection of the current hit
+    /// @return Mapped UV coordinates
+    Point2 mapUVCoordinates(const Intersection &its) const {
+        switch (this->m_uvMapMode) {
+        case UVMapMode::NONE:
+            return Point2(0.0f, 0.0f);
+        case UVMapMode::SPHERE:
+            Vector dir = Vector(its.position).normalized();
+
+            // Get theta angle (y points up, so take cos^-1 of y value)
+            const float theta = acos(dir.y());
+            const float phi = atan2(dir.z(), dir.x());
+
+            return Point2((phi + Pi) * Inv2Pi, theta * InvPi);
+        }
+    }
+
+    /// @brief Calculates the normal vector at the point @param hitPoint with relation to the SDF using the derivatives in each coordinate direction
+    /// @param hitPoint The point at which to calculate the normal vector
+    /// @return The calculated normal vector
+    Vector deriveNormalVector(const Point &hitPoint) const {
+        PointReal realHit = hitPoint.cast<autodiff::real>();
+
+        // For convenience :)
+        using autodiff::wrt;
+        using autodiff::at;
+        using autodiff::derivative;
+
+        return Vector(
+            static_cast<float>(derivative([&](auto p){return this->estimateDistance(p);}, wrt(realHit.x()), at(realHit))),
+            static_cast<float>(derivative([&](auto p){return this->estimateDistance(p);}, wrt(realHit.y()), at(realHit))),
+            static_cast<float>(derivative([&](auto p){return this->estimateDistance(p);}, wrt(realHit.z()), at(realHit)))
+        ).normalized();
+    }
+
 public:
     SDFShape(const Properties &properties) {
         this->m_maxSteps = properties.get<int>("maxSteps", 50);
@@ -47,6 +90,13 @@ public:
         this->m_normalEpsilon = this->m_minDistance;
 
         this->m_sdfChild = properties.getChild<SDFObject>();
+
+        this->m_uvMapMode = properties.getEnum<UVMapMode>("mapMode", UVMapMode::NONE,
+                {
+                    {"sphere", UVMapMode::SPHERE},
+                    {"none", UVMapMode::NONE}
+                }
+            );
 
         // Pre-compute bounding box
         this->m_bounds = this->m_sdfChild->getBoundingBox();
@@ -62,16 +112,20 @@ public:
 
     /// @note Implementation inspired by https://www.youtube.com/watch?v=beNDx5Cvt7M
     bool intersect(const Ray &ray, Intersection &its, Sampler &rng) const override {
-        // Calculate distance at ray origin to determine if we're inside or outside the SDF object and how close we are to the border
-        const float originDist = static_cast<float>(this->estimateDistance(ray.origin.cast<autodiff::real>()));
+        /// @brief The distance to the SDF object at the current march point
+        /// @note Initialized with the distance to the origin of thee ray
+        float distance = static_cast<float>(this->estimateDistance(ray.origin.cast<autodiff::real>()));
 
+        /// @brief The ray whis is marched along
         Ray marchRay = Ray(ray.origin, ray.direction, ray.depth);
 
-        // If the ray depth is >= 1 or the distance is smaller than the minimal distance,
-        // we advance the ray origin a bit in the ray direction to avoid self intersections
-        if ((ray.depth >= 1) or (abs(originDist) < this->m_minDistance)) {
-            marchRay = Ray(ray(this->m_minDistance * ADVANCE_MULTIPLIER), ray.direction, ray.depth);
+        // If the absolute distance is smaller than the minimal distance, we're on the surface of the SDF object
+        if (abs(distance) < this->m_minDistance) {
+            const Vector normal = deriveNormalVector(ray.origin);
+            const float cosTheta =  1 - (Frame::cosTheta(normal) - Frame::cosTheta(ray.direction));
+            marchRay = Ray(ray.origin + normal * cosTheta * (this->m_minDistance * ADVANCE_MULTIPLIER), ray.direction, ray.depth);
         }
+
 
         // Check, if the ray hits the bounding box of the SDF object and return false if not, since then, no intersection can occur
         const float boundsT = intersectBounds(marchRay);
@@ -80,26 +134,15 @@ public:
             return false;
         }
 
-        // If the distance is negative enough, we're inside the SDF object.
-        // In this case, we negate every distance calculated, which inverts the SDF object
-        // and helps with finding the nearest border intersection from inside
-        float distMult = 1;
-
-        float marchRayOriginDist = static_cast<float>(this->estimateDistance(marchRay.origin.cast<autodiff::real>()));
-
-        if (marchRayOriginDist < 0) {
-            distMult = -1;
-        }
-
         // Start the ray-marching loop
         float marchedDist = 0.0f;
-        int step;
+        int step = 1;
 
-        for (step = 0; step < this->m_maxSteps; step++) {
+        for (; step < this->m_maxSteps; step++) {
             // Calculate point at current march distance
             const PointReal marchPoint = marchRay(marchedDist).cast<autodiff::real>();
             // Caulculate/Estimate distance of current point to the SDF object
-            const float distance = distMult * static_cast<float>(this->estimateDistance(marchPoint));
+            distance = std::max(abs(static_cast<float>(this->estimateDistance(marchPoint))), this->m_minDistance / 2);
 
             // Check conditions for no intersection
             if ((its and (marchedDist > its.t))   // Hit would be obstructed by existing hit
@@ -129,25 +172,11 @@ public:
         /// Store fraction of steps to maximum steps such that it can be visualized with the "sdf" integrator
         its.stats.sdfStepFraction = static_cast<float>(step) / this->m_maxSteps;
 
-        /// We currently don't have any texture mapping, so the UV coordinates are constant
-        its.uv[0] = 0;
-        its.uv[1] = 0;
-
         /// Calculate hit point and normal vector by using derivatives in each direction
-        PointReal hitPoint = marchRay(marchedDist).cast<autodiff::real>();
+        Point hitPoint = marchRay(marchedDist);
 
-        its.position = hitPoint.cast<float>();
-
-        // For convenience :)
-        using autodiff::wrt;
-        using autodiff::at;
-        using autodiff::derivative;
-
-        its.frame.normal = Vector(
-            static_cast<float>(derivative([&](auto p){return distMult * this->estimateDistance(p);}, wrt(hitPoint.x()), at(hitPoint))),
-            static_cast<float>(derivative([&](auto p){return distMult * this->estimateDistance(p);}, wrt(hitPoint.y()), at(hitPoint))),
-            static_cast<float>(derivative([&](auto p){return distMult * this->estimateDistance(p);}, wrt(hitPoint.z()), at(hitPoint)))
-        ).normalized();
+        its.position = hitPoint;
+        its.frame.normal = deriveNormalVector(hitPoint);
 
         its.frame.tangent = its.frame.normal.cross(Vector(1.0f, 0.0f, 0.0f));
 
@@ -159,6 +188,9 @@ public:
         // Tangent is not yet normalized, so do that
         its.frame.tangent = its.frame.tangent.normalized();
         its.frame.bitangent = its.frame.normal.cross(its.frame.tangent).normalized();
+
+        /// Map intersection to UV coordinates
+        its.uv = mapUVCoordinates(its);
 
         its.pdf = 0.0f;
 
