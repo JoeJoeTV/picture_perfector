@@ -25,6 +25,10 @@ class Volumepathtracer : public SamplingIntegrator {
                 return 0;
             }
 
+            if (its_shadow.instance->medium() == nullptr) {
+                return 0;
+            }
+
             weight *= its_shadow.instance->medium()->Tr(currentRay, its_shadow.t, rng);
 
             distance -= (its_shadow.position - currentRay.origin).length();
@@ -137,7 +141,7 @@ public:
                 float probabilityOfThisScatter = (*currentMedium).probabilityOfSampelingThisPoint(tScatter);
 
                 accumulatedLight += emission * accumulatedWeight;
-                accumulatedWeight *= mediumTValue * currentMedium->getColor() / (probabilityOfThisScatter*Pi);
+                accumulatedWeight *= mediumTValue * currentMedium->getColor() / (Pi);
                 accumulatedLight +=  accumulatedWeight * lightContribution;
                 
                 // sample a direction that we scater in
@@ -177,7 +181,7 @@ public:
                     lightContribution = Color(0.f);
                 }
                 //std::cout << pOfSampleingMedium << std::endl;
-                accumulatedLight += accumulatedWeight * (emissions + lightContribution) / (1-pOfSampleingMedium);
+                accumulatedLight += accumulatedWeight * (emissions + lightContribution);
                 accumulatedWeight *= sample.weight;
                 
                 // update variables for next iteration
