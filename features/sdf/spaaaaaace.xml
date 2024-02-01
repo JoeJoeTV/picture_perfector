@@ -1,0 +1,111 @@
+<!-- SDF Objects -->
+<sdf id="baseInner" type="thicken" amount="0.1">
+  <sdf type="transform">
+      <sdf type="cylinder" height="2" radius="1.5"/>
+      <transform>
+          <rotate axis="1,0,0" angle="90" />
+          <translate x="0" z="1" y="0" />
+      </transform>
+  </sdf>
+</sdf>
+
+<sdf id="baseOuter" type="thicken" amount="0.1">
+  <sdf type="transform">
+      <sdf type="cylinder" height="2" radius="2"/>
+      <transform>
+          <rotate axis="1,0,0" angle="90" />
+      </transform>
+  </sdf>
+</sdf>
+
+<sdf id="handle" type="combine" mode="sub" smooth="true" k="0.25">
+  <sdf type="transform">
+      <sdf type="cylinder" height="1" radius="0.85"/>
+      <transform>
+          <translate x="2.7" z="0.4" y="0" />
+      </transform>
+  </sdf>
+  <sdf type="thicken" amount="0.11">
+      <sdf type="transform">
+          <sdf type="cylinder" height="0.25" radius="1.35"/>
+          <transform>
+              <translate x="2.7" z="0.4" y="0" />
+          </transform>
+      </sdf>
+  </sdf>
+</sdf>
+
+<scene id="scene">
+  <camera type="perspective">
+    <integer name="width" value="1024"/>
+    <integer name="height" value="1024"/>
+    <float name="fov" value="48.455"/>
+    <string name="fovAxis" value="y"/>
+    <transform>
+      <matrix value="0.68592,0.32401,-0.65156,7.3589,  0.72768,-0.30542,0.61417,-6.9258,  -4.0113e-09,-0.8954,-0.44527,4.9583,  0,0,0,1"/>
+    </transform>
+  </camera>
+  <instance>
+    <bsdf type="principled">
+      <texture name="baseColor" type="image" filename="textures/Moon _BaseColor.jpg"/>
+      <texture name="roughness" type="image" filename="textures/Moon _Roughness.jpg" linear="true"/>
+      <texture name="metallic" type="constant" value="0"/>
+      <texture name="specular" type="constant" value="0.5"/>
+    </bsdf>
+    <texture name="normal" type="image" filename="textures/Moon _Normal.jpg" linear="true"/>
+
+    <shape type="sdf" maxSteps="300" minDistance="0.001" mapMode="sphere">
+      <sdf type="mandelbulb"/>
+    </shape>
+
+    <transform>
+      <matrix value="3,0,0,0,  0,-1.3113e-07,-3,0,  0,3,-1.3113e-07,0,  0,0,0,1"/>
+    </transform>
+  </instance>
+  <light type="area">
+    <instance>
+      <shape type="sphere"/>
+      <transform>
+        <scale value="0.5"/>
+        <translate x="4.0762" y="4.1634" z="9.4601"/>
+      </transform>
+      <emission type="lambertian">
+        <texture name="emission" type="constant" value="1013.2,1013.2,1013.2"/>
+      </emission>
+    </instance>
+  </light>
+  <instance>
+    <bsdf type="principled">
+      <texture name="baseColor" type="image" filename="textures/Porcelain002_2K_Color.jpg"/>
+      <texture name="roughness" type="image" filename="textures/Porcelain002_2K_Roughness.jpg" linear="true"/>
+      <texture name="metallic" type="constant" value="0"/>
+      <texture name="specular" type="constant" value="0.5"/>
+    </bsdf>
+
+    <shape type="sdf" maxSteps="300" minDistance="0.001" mapMode="sphere">
+      <sdf type="combine" mode="sub" smooth="true" k="0.25">
+          <ref id="baseInner"/>
+          <sdf type="combine" mode="union" smooth="true" k="0.25">
+              <ref id="baseOuter"/>
+              <ref id="handle"/>
+          </sdf>
+      </sdf>
+    </shape>
+
+    <transform>
+      <scale value="0.4"/>
+      <matrix value="0.44419,0.22956,-6.9256e-09,1.8641,  -0.22451,0.4344,-0.10438,-4.476,  -0.047924,0.092728,0.48898,1.885,  0,0,0,1"/>
+    </transform>
+  </instance>
+  <light type="envmap">
+    <texture type="image" filename="textures/milky_way_with_stars_4K_5bb1bd7e-8918-4a0b-bf70-f243c444d57b.ex.exr" border="clamp" linear="true"/>
+    <transform>
+      <matrix value="1,0,0,0,  0,0,1,0,  0,-1,0,0,  0,0,0,1"/>
+    </transform>
+  </light>
+</scene>
+<integrator type="pathtracer" depth="5" nee="true" mis="true">
+  <ref id="scene"/>
+  <image id="spaaaaaace"/>
+  <sampler type="independent" count="512"/>
+</integrator>
