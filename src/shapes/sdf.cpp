@@ -134,6 +134,11 @@ public:
             return false;
         }
 
+        if (boundsT > this->m_minDistance * ADVANCE_MULTIPLIER) {
+            marchRay = Ray(marchRay(boundsT - this->m_minDistance * ADVANCE_MULTIPLIER), ray.direction, ray.depth);
+        }
+
+
         // Start the ray-marching loop
         float marchedDist = 0.0f;
         int step = 1;

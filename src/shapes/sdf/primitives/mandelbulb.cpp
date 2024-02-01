@@ -51,14 +51,14 @@ public:
             z = zr * VectorReal(sin(theta)*cos(phi), sin(phi)*sin(theta), cos(theta));
             z += VectorReal(p);
         }
-        
+
         return 0.5 * log(r) * r / dr;
     }
 
     Bounds getBoundingBox() const override {
         return Bounds(
-            Point(-1.0f, -1.0f, -1.0f),
-            Point(1.0f, 1.0f, 1.0f)
+            Point(-1.5f, -1.5f, -1.5f),
+            Point(1.5f, 1.5f, 1.5f)
         );
     }
 
