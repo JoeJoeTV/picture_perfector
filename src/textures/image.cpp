@@ -18,6 +18,8 @@ class ImageTexture : public Texture {
     BorderMode m_border;
     FilterMode m_filter;
 
+    // Look at this nice music I found: https://shorturl.at/hlzSW
+
     /// @brief Returns the Color at the pixel pointed to by the given integer coordinates while respecting the BorderMode of the image texture
     /// @param iuv Integer coordinates on the image
     /// @return The Color ofthe pixel

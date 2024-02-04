@@ -210,6 +210,8 @@ public:
      *  Added functionality
      */
 
+    // "New Divide" starts playing...
+
     /// @brief Removes the scaling factor from the transformation and returns it as a vector
     /// @return The scaling factors in each direction
     Vector popScale() {
