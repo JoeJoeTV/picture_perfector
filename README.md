@@ -3,6 +3,8 @@
 Path-tracing rendering engine created for the Computer Graphics 1 lecture at Saarland University by [Lukas Auer](https://github.com/LeS4kul) and [me](https://github.com/JoeJoeTV).
 This renderer is based upon the lighwave framework that was provided for the course.
 
+![Scene rendered with picture_perfector](https://sonic.joejoetv.de/uploads/2eef1e9f-3b9a-4bcc-9f88-36fa6eb62012.png)
+
 ## Features
 
 ### Provided by Lighwave
